@@ -1,0 +1,50 @@
+{
+  "_alpine-CXqvySvQ.js": {
+    "file": "assets/alpine-CXqvySvQ.js",
+    "name": "alpine"
+  },
+  "_lenis-XHln91gA.js": {
+    "file": "assets/lenis-XHln91gA.js",
+    "name": "lenis"
+  },
+  "_motion-C8IefbVz.js": {
+    "file": "assets/motion-C8IefbVz.js",
+    "name": "motion"
+  },
+  "node_modules/three/build/three.module.js": {
+    "file": "assets/three-v4w2woeG.js",
+    "name": "three",
+    "src": "node_modules/three/build/three.module.js",
+    "isDynamicEntry": true
+  },
+  "resources/css/admin.css": {
+    "file": "assets/admin-CbNiYxZZ.css",
+    "src": "resources/css/admin.css",
+    "isEntry": true
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-BrkR-By5.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/admin.js": {
+    "file": "assets/admin-D8mFENnh.js",
+    "name": "admin",
+    "src": "resources/js/admin.js",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-CKlsb4Y9.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_alpine-CXqvySvQ.js",
+      "_lenis-XHln91gA.js",
+      "_motion-C8IefbVz.js"
+    ],
+    "dynamicImports": [
+      "node_modules/three/build/three.module.js"
+    ]
+  }
+}
