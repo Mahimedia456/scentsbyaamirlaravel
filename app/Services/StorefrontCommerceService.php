@@ -55,9 +55,15 @@ class StorefrontCommerceService
             $variant = $product->variants->first(fn ($v) => $v->is_active && $this->variantStock($v) > 0)
                 ?: $product->variants->firstWhere('is_active', true);
             $price = (float) ($variant?->price ?? $product->base_price ?? 0);
-            $stock = $product->variants->where('is_active', true)->isNotEmpty()
-                ? (int) $product->variants->where('is_active', true)->sum(fn ($v) => $this->variantStock($v))
-                : $this->productStock($product);
+            $activeVariants = $product->variants->where('is_active', true);
+
+            if ($activeVariants->isNotEmpty()) {
+                $stock = (int) $activeVariants->sum(fn ($v) => $this->variantStock($v));
+                $available = $stock > 0;
+            } else {
+                $available = $this->simpleProductAvailable($product);
+                $stock = $this->simpleProductStockLimit($product);
+            }
 
             return [
                 'product_id' => $product->id,
@@ -67,9 +73,9 @@ class StorefrontCommerceService
                 'price' => number_format($price, 0, '.', ','),
                 'price_value' => $price,
                 'image' => $primary?->path ? $this->imageUrl($primary->path) : Arr::get($item, 'image'),
-                'available' => $stock > 0,
+                'available' => $available,
                 'stock' => $stock,
-                'status' => $stock > 0 ? 'ok' : 'out_of_stock',
+                'status' => $available ? 'ok' : 'out_of_stock',
             ];
         })->values()->all();
     }
@@ -114,11 +120,17 @@ class StorefrontCommerceService
                 ?: $product->variants->first();
         }
 
-        $stock = $variant ? $this->variantStock($variant) : $this->productStock($product);
+        $stock = $variant
+            ? $this->variantStock($variant)
+            : $this->simpleProductStockLimit($product);
+
         $requestedQty = max(1, (int) ($line['qty'] ?? 1));
         $qty = min($requestedQty, max(0, $stock));
         $price = (float) ($variant?->price ?? $product->base_price ?? 0);
-        $available = $stock > 0 && $qty > 0;
+
+        $available = $variant
+            ? ($stock > 0 && $qty > 0)
+            : ($this->simpleProductAvailable($product) && $qty > 0);
         $status = !$available ? 'out_of_stock' : ($qty !== $requestedQty ? 'quantity_adjusted' : 'ok');
         $primary = $product->images->firstWhere('is_primary', true) ?: $product->images->first();
 
@@ -130,7 +142,9 @@ class StorefrontCommerceService
             'name' => $product->name,
             'family' => $product->subtitle ?: ($product->category?->name ?: 'Fine Fragrance'),
             'sku' => $variant?->sku ?: $product->sku,
-            'size' => $variant?->size_label ?: ($variant?->name ?: ($line['size'] ?? null)),
+            'size' => $variant?->size_label
+                ?: ($variant?->name
+                    ?: ($product->size_label ?: ($line['size'] ?? '50 ML'))),
             'price' => number_format($price, 0, '.', ','),
             'price_value' => $price,
             'image' => $primary?->path ? $this->imageUrl($primary->path) : ($line['image'] ?? null),
@@ -186,6 +200,24 @@ class StorefrontCommerceService
             (int) ($product->stock ?? 0),
             (int) ($product->stock_quantity ?? 0)
         );
+    }
+
+    private function simpleProductAvailable(Product $product): bool
+    {
+        if ((bool) ($product->track_inventory ?? false)) {
+            return $this->productStock($product) > 0;
+        }
+
+        return (bool) ($product->is_in_stock ?? false);
+    }
+
+    private function simpleProductStockLimit(Product $product): int
+    {
+        if ((bool) ($product->track_inventory ?? false)) {
+            return $this->productStock($product);
+        }
+
+        return $this->simpleProductAvailable($product) ? 99 : 0;
     }
 
     private function toFloat(mixed $value): float

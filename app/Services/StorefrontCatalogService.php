@@ -307,9 +307,28 @@ class StorefrontCatalogService
         $visual = config("storefront.products.{$product->slug}", []);
 
         $price = $variant?->price ?? $product->base_price ?? 0;
-        $stock = $product->variants->isNotEmpty()
-            ? (int) $product->variants->sum(fn ($v) => max((int) ($v->stock ?? 0), (int) ($v->stock_quantity ?? 0)))
-            : max((int) ($product->stock ?? 0), (int) ($product->stock_quantity ?? 0));
+
+        if ($product->variants->isNotEmpty()) {
+            $stock = (int) $product->variants->sum(
+                fn ($v) => max((int) ($v->stock ?? 0), (int) ($v->stock_quantity ?? 0))
+            );
+            $inStock = $stock > 0;
+        } else {
+            $trackedStock = max(
+                (int) ($product->stock ?? 0),
+                (int) ($product->stock_quantity ?? 0)
+            );
+            $inStock = (bool) ($product->track_inventory ?? false)
+                ? $trackedStock > 0
+                : (bool) ($product->is_in_stock ?? false);
+
+            // Untracked Woo simple products have no numeric quantity. A generous
+            // cart ceiling is used only for UI quantity control; checkout still
+            // validates is_in_stock from the live Laravel product record.
+            $stock = (bool) ($product->track_inventory ?? false)
+                ? $trackedStock
+                : ($inStock ? 99 : 0);
+        }
 
         return [
             'id' => $product->id,
@@ -344,8 +363,10 @@ class StorefrontCatalogService
             'notes' => $this->plainText($product->notes),
             'wear' => $this->plainText($product->wear),
             'sku' => $variant?->sku ?: $product->sku,
+            'size_label' => $variant?->size_label ?: ($product->size_label ?: '50 ML'),
+            'track_inventory' => (bool) ($product->track_inventory ?? false),
             'stock' => $stock,
-            'in_stock' => $stock > 0,
+            'in_stock' => $inStock,
             'is_featured' => (bool) $product->is_featured,
             'variants' => $product->variants
                 ->sortBy(function ($v) {

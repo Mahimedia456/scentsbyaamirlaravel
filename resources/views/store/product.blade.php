@@ -92,8 +92,8 @@
     if ($variants->isEmpty()) {
         $variants = collect([[
             'id' => null,
-            'name' => '50 ML',
-            'size_label' => '50 ML',
+            'name' => $visual['size_label'] ?? '50 ML',
+            'size_label' => $visual['size_label'] ?? '50 ML',
             'sku' => $visual['sku'] ?? null,
             'price' => $price,
             'price_value' => $priceValue,
@@ -103,7 +103,7 @@
     }
 
     $defaultVariant = $variants->firstWhere('in_stock', true) ?: $variants->first();
-    $defaultSize = $defaultVariant['size_label'] ?? $defaultVariant['name'] ?? '50 ML';
+    $defaultSize = $defaultVariant['size_label'] ?? $defaultVariant['name'] ?? ($visual['size_label'] ?? '50 ML');
     $inStock = $variants->contains(fn ($variant) => (bool) ($variant['in_stock'] ?? ((int) ($variant['stock'] ?? 0) > 0)));
 
     $story = trim((string) ($visual['story'] ?? ''))

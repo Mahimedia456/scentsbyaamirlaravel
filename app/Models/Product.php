@@ -10,11 +10,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Product extends Model
 {
     protected $fillable = [
-        'category_id','name','slug','subtitle','description','story','notes','wear','status','is_featured','base_price','compare_at_price','stock','sku','meta_title','meta_description'
+        'category_id','name','slug','subtitle','description','story','notes','wear','status','is_featured','base_price','compare_at_price','stock','stock_quantity','track_inventory','is_in_stock','size_label','sku','meta_title','meta_description'
     ];
 
     protected $casts = [
-        'is_featured'=>'boolean','base_price'=>'decimal:2','compare_at_price'=>'decimal:2','stock'=>'integer'
+        'is_featured'=>'boolean','base_price'=>'decimal:2','compare_at_price'=>'decimal:2','stock'=>'integer','stock_quantity'=>'integer','track_inventory'=>'boolean','is_in_stock'=>'boolean'
     ];
 
     public function category(): BelongsTo { return $this->belongsTo(Category::class); }

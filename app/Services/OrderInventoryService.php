@@ -25,8 +25,14 @@ class OrderInventoryService
                 } else {
                     $product = Product::query()->whereKey($item->product_id)->lockForUpdate()->first();
                     if (!$product) continue;
-                    $after = (int)$product->stock + (int)$item->quantity;
-                    $product->update(['stock'=>$after]);
+                    if (!(bool) ($product->track_inventory ?? false)) continue;
+                    $current = max((int) ($product->stock ?? 0), (int) ($product->stock_quantity ?? 0));
+                    $after = $current + (int)$item->quantity;
+                    $product->update([
+                        'stock'=>$after,
+                        'stock_quantity'=>$after,
+                        'is_in_stock'=>true,
+                    ]);
                     InventoryAdjustment::create(['product_id'=>$product->id,'product_variant_id'=>null,'user_id'=>auth()->id(),'quantity_change'=>(int)$item->quantity,'quantity_after'=>$after,'reason'=>'order_cancelled','reference'=>$locked->order_number,'note'=>'Inventory restored after order cancellation.']);
                 }
             }

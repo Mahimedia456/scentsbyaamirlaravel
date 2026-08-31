@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 @section('title',$product->exists ? 'Edit Product' : 'New Product')
 @section('content')
-@php $editing=$product->exists; $oldVariants=old('variants',$editing?$product->variants->toArray():[['name'=>'50 ml','size_label'=>'50 ml','sku'=>'','price'=>'','stock'=>0,'is_active'=>1]]); $oldImages=old('images',$editing?$product->images->toArray():[['path'=>'','alt_text'=>'','is_primary'=>1]]); @endphp
+@php $editing=$product->exists; $oldVariants=old('variants',$editing?$product->variants->toArray():[]); $oldImages=old('images',$editing?$product->images->toArray():[['path'=>'','alt_text'=>'','is_primary'=>1]]); @endphp
 <form method="POST" enctype="multipart/form-data" action="{{ $editing ? route('admin.products.update',$product) : route('admin.products.store') }}" class="space-y-6">@csrf @if($editing)@method('PUT')@endif
 <div class="flex items-end justify-between gap-4"><div><p class="text-xs uppercase tracking-[.28em] text-neutral-500">Catalog</p><h1 class="mt-2 text-3xl font-semibold">{{ $editing ? 'Edit product' : 'Create product' }}</h1></div><button class="rounded-full bg-black px-6 py-3 text-sm font-medium text-white">Save product</button></div>
 @if($errors->any())<div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{{ $errors->first() }}</div>@endif
@@ -9,7 +9,32 @@
 <div class="space-y-6">
 <section class="rounded-3xl border border-neutral-200 bg-white p-6"><h2 class="text-lg font-semibold">Product identity</h2><div class="mt-5 grid gap-4 md:grid-cols-2"><label class="md:col-span-2">Name<input name="name" value="{{ old('name',$product->name) }}" class="mt-2 w-full rounded-2xl border-neutral-200"></label><label>Slug<input name="slug" value="{{ old('slug',$product->slug) }}" class="mt-2 w-full rounded-2xl border-neutral-200"></label><label>SKU<input name="sku" value="{{ old('sku',$product->sku) }}" class="mt-2 w-full rounded-2xl border-neutral-200"></label><label class="md:col-span-2">Subtitle<input name="subtitle" value="{{ old('subtitle',$product->subtitle) }}" class="mt-2 w-full rounded-2xl border-neutral-200"></label><label class="md:col-span-2">Description<textarea name="description" rows="5" class="mt-2 w-full rounded-2xl border-neutral-200">{{ old('description',$product->description) }}</textarea></label></div></section>
 <section class="rounded-3xl border border-neutral-200 bg-white p-6"><h2 class="text-lg font-semibold">Fragrance editorial</h2><div class="mt-5 grid gap-4"><label>Story<textarea name="story" rows="4" class="mt-2 w-full rounded-2xl border-neutral-200">{{ old('story',$product->story) }}</textarea></label><label>Notes<textarea name="notes" rows="4" class="mt-2 w-full rounded-2xl border-neutral-200">{{ old('notes',$product->notes) }}</textarea></label><label>Wear<textarea name="wear" rows="4" class="mt-2 w-full rounded-2xl border-neutral-200">{{ old('wear',$product->wear) }}</textarea></label></div></section>
-<section class="rounded-3xl border border-neutral-200 bg-white p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-semibold">Variants</h2><span class="text-xs text-neutral-500">Size, SKU, price and stock</span></div><div class="mt-5 space-y-3">@foreach($oldVariants as $i=>$v)<div class="grid gap-3 rounded-2xl bg-neutral-50 p-4 md:grid-cols-6"><input name="variants[{{ $i }}][name]" value="{{ $v['name'] ?? '' }}" placeholder="Name" class="rounded-xl border-neutral-200"><input name="variants[{{ $i }}][size_label]" value="{{ $v['size_label'] ?? '' }}" placeholder="50 ml" class="rounded-xl border-neutral-200"><input name="variants[{{ $i }}][sku]" value="{{ $v['sku'] ?? '' }}" placeholder="SKU" class="rounded-xl border-neutral-200"><input name="variants[{{ $i }}][price]" value="{{ $v['price'] ?? '' }}" placeholder="Price" class="rounded-xl border-neutral-200"><input name="variants[{{ $i }}][stock]" value="{{ $v['stock'] ?? 0 }}" placeholder="Stock" class="rounded-xl border-neutral-200"><label class="flex items-center gap-2 text-sm"><input type="checkbox" name="variants[{{ $i }}][is_active]" value="1" @checked($v['is_active'] ?? true)> Active</label></div>@endforeach</div></section>
+<section class="rounded-3xl border border-neutral-200 bg-white p-6">
+    <details @if(count($oldVariants)) open @endif>
+        <summary class="cursor-pointer">
+            <div class="inline-flex items-center justify-between gap-4">
+                <span class="text-lg font-semibold">Advanced variants</span>
+                <span class="text-xs text-neutral-500">Only use when a product really has multiple purchasable variants.</span>
+            </div>
+        </summary>
+        <div class="mt-5 space-y-3">
+            @forelse($oldVariants as $i=>$v)
+                <div class="grid gap-3 rounded-2xl bg-neutral-50 p-4 md:grid-cols-6">
+                    <input name="variants[{{ $i }}][name]" value="{{ $v['name'] ?? '' }}" placeholder="Name" class="rounded-xl border-neutral-200">
+                    <input name="variants[{{ $i }}][size_label]" value="{{ $v['size_label'] ?? '' }}" placeholder="Size" class="rounded-xl border-neutral-200">
+                    <input name="variants[{{ $i }}][sku]" value="{{ $v['sku'] ?? '' }}" placeholder="SKU" class="rounded-xl border-neutral-200">
+                    <input name="variants[{{ $i }}][price]" value="{{ $v['price'] ?? '' }}" placeholder="Price" class="rounded-xl border-neutral-200">
+                    <input name="variants[{{ $i }}][stock]" value="{{ $v['stock'] ?? 0 }}" placeholder="Stock" class="rounded-xl border-neutral-200">
+                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="variants[{{ $i }}][is_active]" value="1" @checked($v['is_active'] ?? true)> Active</label>
+                </div>
+            @empty
+                <p class="rounded-2xl bg-neutral-50 p-4 text-sm leading-6 text-neutral-500">
+                    This is a simple product. No variant row is required.
+                </p>
+            @endforelse
+        </div>
+    </details>
+</section>
 <section class="rounded-3xl border border-neutral-200 bg-white p-6">
 <div class="flex flex-wrap items-start justify-between gap-4">
     <div><h2 class="text-lg font-semibold">Product images</h2><p class="mt-1 max-w-2xl text-sm leading-6 text-neutral-500">Upload JPG, PNG or WebP images directly. Up to 12 files, 8 MB each. The first uploaded image becomes primary when no primary image is already selected.</p></div>
@@ -98,7 +123,37 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 <aside class="space-y-6"><section class="rounded-3xl border border-neutral-200 bg-white p-6"><h2 class="font-semibold">Publishing</h2><div class="mt-4 space-y-4"><label>Status<select name="status" class="mt-2 w-full rounded-2xl border-neutral-200">@foreach(['draft','active','archived'] as $s)<option value="{{ $s }}" @selected(old('status',$product->status ?: 'draft')===$s)>{{ ucfirst($s) }}</option>@endforeach</select></label><label class="flex items-center gap-2"><input type="checkbox" name="is_featured" value="1" @checked(old('is_featured',$product->is_featured))> Featured product</label></div></section>
 <section class="rounded-3xl border border-neutral-200 bg-white p-6"><h2 class="font-semibold">Classification</h2><label class="mt-4 block">Category<select name="category_id" class="mt-2 w-full rounded-2xl border-neutral-200"><option value="">No category</option>@foreach($categories as $c)<option value="{{ $c->id }}" @selected((string)old('category_id',$product->category_id)===(string)$c->id)>{{ $c->name }}</option>@endforeach</select></label><div class="mt-4"><div class="mb-2 text-sm">Collections</div>@foreach($collections as $c)<label class="mb-2 flex items-center gap-2 text-sm"><input type="checkbox" name="collections[]" value="{{ $c->id }}" @checked(in_array($c->id,old('collections',$editing?$product->collections->pluck('id')->all():[])))> {{ $c->name }}</label>@endforeach</div></section>
-<section class="rounded-3xl border border-neutral-200 bg-white p-6"><h2 class="font-semibold">Base commerce</h2><div class="mt-4 grid gap-4"><label>Base price<input name="base_price" type="number" step="0.01" value="{{ old('base_price',$product->base_price) }}" class="mt-2 w-full rounded-2xl border-neutral-200"></label><label>Compare at price<input name="compare_at_price" type="number" step="0.01" value="{{ old('compare_at_price',$product->compare_at_price) }}" class="mt-2 w-full rounded-2xl border-neutral-200"></label><label>Stock<input name="stock" type="number" value="{{ old('stock',$product->stock ?? 0) }}" class="mt-2 w-full rounded-2xl border-neutral-200"></label></div></section>
+<section class="rounded-3xl border border-neutral-200 bg-white p-6">
+    <h2 class="font-semibold">Base commerce</h2>
+    <div class="mt-4 grid gap-4">
+        <label>Base price
+            <input name="base_price" type="number" step="0.01" value="{{ old('base_price',$product->base_price) }}" class="mt-2 w-full rounded-2xl border-neutral-200">
+        </label>
+        <label>Compare at price
+            <input name="compare_at_price" type="number" step="0.01" value="{{ old('compare_at_price',$product->compare_at_price) }}" class="mt-2 w-full rounded-2xl border-neutral-200">
+        </label>
+        <label>Display size
+            <input name="size_label" value="{{ old('size_label',$product->size_label ?: '50 ML') }}" placeholder="50 ML" class="mt-2 w-full rounded-2xl border-neutral-200">
+        </label>
+
+        <div class="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+            <p class="text-sm font-medium">Inventory mode</p>
+            <label class="mt-3 flex items-start gap-3 text-sm">
+                <input type="checkbox" name="track_inventory" value="1" @checked(old('track_inventory',$product->track_inventory))>
+                <span><strong>Track numeric quantity</strong><br><span class="text-xs text-neutral-500">Enable only when Laravel should decrement a real quantity after each order.</span></span>
+            </label>
+
+            <label class="mt-4 block">Stock quantity
+                <input name="stock" type="number" min="0" value="{{ old('stock',$product->stock ?? 0) }}" class="mt-2 w-full rounded-2xl border-neutral-200">
+            </label>
+
+            <label class="mt-4 flex items-start gap-3 text-sm">
+                <input type="checkbox" name="is_in_stock" value="1" @checked(old('is_in_stock',$product->is_in_stock))>
+                <span><strong>Available / In stock</strong><br><span class="text-xs text-neutral-500">For Woo simple products with stock management disabled, this is the storefront availability switch.</span></span>
+            </label>
+        </div>
+    </div>
+</section>
 <section class="rounded-3xl border border-neutral-200 bg-white p-6"><h2 class="font-semibold">SEO</h2><div class="mt-4 grid gap-4"><label>Meta title<input name="meta_title" value="{{ old('meta_title',$product->meta_title) }}" class="mt-2 w-full rounded-2xl border-neutral-200"></label><label>Meta description<textarea name="meta_description" rows="4" class="mt-2 w-full rounded-2xl border-neutral-200">{{ old('meta_description',$product->meta_description) }}</textarea></label></div></section></aside>
 </div></form>
 @endsection

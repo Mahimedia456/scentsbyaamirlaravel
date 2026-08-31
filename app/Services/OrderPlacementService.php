@@ -100,15 +100,38 @@ class OrderPlacementService
                         throw ValidationException::withMessages(["items.$index" => "{$product->name}: please select a size again."]);
                     }
 
-                    $stock = $variant ? (int) $variant->stock : (int) $product->stock;
-                    if ($stock < $qty) {
-                        throw ValidationException::withMessages(["items.$index" => "{$product->name}: only {$stock} item(s) remain in stock."]);
+                    $tracked = $variant
+                        ? true
+                        : (bool) ($product->track_inventory ?? false);
+
+                    $stock = $variant
+                        ? max((int) ($variant->stock ?? 0), (int) ($variant->stock_quantity ?? 0))
+                        : max((int) ($product->stock ?? 0), (int) ($product->stock_quantity ?? 0));
+
+                    if ($tracked && $stock < $qty) {
+                        throw ValidationException::withMessages([
+                            "items.$index" => "{$product->name}: only {$stock} item(s) remain in stock."
+                        ]);
+                    }
+
+                    if (!$variant && !$tracked && !(bool) ($product->is_in_stock ?? false)) {
+                        throw ValidationException::withMessages([
+                            "items.$index" => "{$product->name}: this product is currently out of stock."
+                        ]);
                     }
 
                     $price = (float) ($variant?->price ?? $product->base_price ?? 0);
                     $lineTotal = round($price * $qty, 2);
                     $subtotal += $lineTotal;
-                    $prepared[] = compact('product', 'variant', 'qty', 'price', 'lineTotal', 'stock');
+                    $prepared[] = compact(
+                        'product',
+                        'variant',
+                        'qty',
+                        'price',
+                        'lineTotal',
+                        'stock',
+                        'tracked'
+                    );
                 }
 
                 $couponResult = $this->coupons->resolve($payload['coupon_code'] ?? null, $customer, $subtotal);
@@ -162,7 +185,9 @@ class OrderPlacementService
                     $product = $line['product'];
                     $variant = $line['variant'];
                     $qty = $line['qty'];
-                    $after = $line['stock'] - $qty;
+                    $after = $line['tracked']
+                        ? ($line['stock'] - $qty)
+                        : $line['stock'];
 
                     $order->items()->create([
                         'product_id' => $product->id,
@@ -174,22 +199,28 @@ class OrderPlacementService
                         'line_total' => $line['lineTotal'],
                     ]);
 
-                    if ($variant) {
-                        $variant->update(['stock' => $after]);
-                    } else {
-                        $product->update(['stock' => $after]);
-                    }
+                    if ($line['tracked']) {
+                        if ($variant) {
+                            $variant->update(['stock' => $after]);
+                        } else {
+                            $product->update([
+                                'stock' => $after,
+                                'stock_quantity' => $after,
+                                'is_in_stock' => $after > 0,
+                            ]);
+                        }
 
-                    InventoryAdjustment::create([
-                        'product_id' => $product->id,
-                        'product_variant_id' => $variant?->id,
-                        'user_id' => null,
-                        'quantity_change' => -$qty,
-                        'quantity_after' => $after,
-                        'reason' => 'order',
-                        'reference' => $order->order_number,
-                        'note' => 'Storefront order placed.',
-                    ]);
+                        InventoryAdjustment::create([
+                            'product_id' => $product->id,
+                            'product_variant_id' => $variant?->id,
+                            'user_id' => null,
+                            'quantity_change' => -$qty,
+                            'quantity_after' => $after,
+                            'reason' => 'order',
+                            'reference' => $order->order_number,
+                            'note' => 'Storefront order placed.',
+                        ]);
+                    }
                 }
 
                 if ($coupon && $discountTotal > 0) {

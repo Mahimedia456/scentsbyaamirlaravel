@@ -12,7 +12,7 @@ class AuditStorefrontStock extends Command
     protected $signature = 'storefront:audit-stock
                             {--fix-legacy : Copy positive legacy stock_quantity values into stock when stock is zero}';
 
-    protected $description = 'Show product/variant storefront stock and optionally repair legacy stock_quantity -> stock mismatches.';
+    protected $description = 'Audit simple-product availability, tracked stock and variant stock for the storefront.';
 
     public function handle(): int
     {
@@ -22,14 +22,18 @@ class AuditStorefrontStock extends Command
         }
 
         $hasProductLegacy = Schema::hasColumn('products', 'stock_quantity');
-        $hasVariantLegacy = Schema::hasTable('product_variants') && Schema::hasColumn('product_variants', 'stock_quantity');
+        $hasVariantLegacy = Schema::hasTable('product_variants')
+            && Schema::hasColumn('product_variants', 'stock_quantity');
 
         if ($this->option('fix-legacy')) {
             if ($hasProductLegacy && Schema::hasColumn('products', 'stock')) {
                 DB::table('products')
                     ->where('stock', 0)
                     ->where('stock_quantity', '>', 0)
-                    ->update(['stock' => DB::raw('stock_quantity')]);
+                    ->update([
+                        'stock' => DB::raw('stock_quantity'),
+                        'is_in_stock' => true,
+                    ]);
             }
 
             if ($hasVariantLegacy && Schema::hasColumn('product_variants', 'stock')) {
@@ -39,28 +43,47 @@ class AuditStorefrontStock extends Command
                     ->update(['stock' => DB::raw('stock_quantity')]);
             }
 
-            $this->info('Legacy stock sync completed.');
+            $this->info('Legacy numeric stock sync completed.');
         }
 
         $products = Product::query()
             ->where('status', 'active')
-            ->with(['variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
+            ->with([
+                'variants' => fn ($query) => $query
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')
+            ])
             ->orderBy('name')
             ->get();
 
         foreach ($products as $product) {
-            $productStock = max(
+            $trackedStock = max(
                 (int) ($product->stock ?? 0),
                 (int) ($product->stock_quantity ?? 0)
             );
 
             $this->newLine();
-            $this->line("<info>{$product->name}</info> [{$product->slug}] product stock={$productStock}");
+            $this->line("<info>{$product->name}</info>");
+            $this->line("  slug={$product->slug}");
+            $this->line("  size=" . ($product->size_label ?: '-'));
 
             if ($product->variants->isEmpty()) {
-                $this->line('  - no active variants');
+                $mode = (bool) ($product->track_inventory ?? false)
+                    ? 'tracked quantity'
+                    : 'simple availability';
+
+                $available = (bool) ($product->track_inventory ?? false)
+                    ? $trackedStock > 0
+                    : (bool) ($product->is_in_stock ?? false);
+
+                $this->line("  mode={$mode}");
+                $this->line("  numeric_stock={$trackedStock}");
+                $this->line("  is_in_stock=" . ($available ? 'YES' : 'NO'));
+                $this->line('  variants=none (correct for Woo simple product)');
                 continue;
             }
+
+            $this->line('  mode=variants');
 
             foreach ($product->variants as $variant) {
                 $stock = max(

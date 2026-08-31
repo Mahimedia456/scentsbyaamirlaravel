@@ -68,6 +68,7 @@ class ProductController extends Controller
             'subtitle'=>['nullable','string','max:200'],'description'=>['nullable','string'],'story'=>['nullable','string'],'notes'=>['nullable','string'],'wear'=>['nullable','string'],
             'status'=>['required',Rule::in(['draft','active','archived'])], 'sku'=>['nullable','string','max:100',Rule::unique('products','sku')->ignore($id)],
             'base_price'=>['nullable','numeric','min:0'],'compare_at_price'=>['nullable','numeric','min:0'],'stock'=>['nullable','integer','min:0'],
+            'size_label'=>['nullable','string','max:80'],'track_inventory'=>['nullable','boolean'],'is_in_stock'=>['nullable','boolean'],
             'meta_title'=>['nullable','string','max:180'],'meta_description'=>['nullable','string','max:500'],
             'collections'=>['nullable','array'],'collections.*'=>['integer','exists:collections,id'],
             'variants'=>['nullable','array'],'variants.*.name'=>['nullable','string','max:120'],'variants.*.size_label'=>['nullable','string','max:80'],'variants.*.sku'=>['nullable','string','max:100'],'variants.*.price'=>['nullable','numeric','min:0'],'variants.*.compare_at_price'=>['nullable','numeric','min:0'],'variants.*.stock'=>['nullable','integer','min:0'],'variants.*.is_active'=>['nullable','boolean'],
@@ -76,7 +77,14 @@ class ProductController extends Controller
         ]);
         $data['slug']=$data['slug']?:Str::slug($data['name']);
         $data['is_featured']=$request->boolean('is_featured');
+        $data['track_inventory']=$request->boolean('track_inventory');
+        $data['is_in_stock']=$request->boolean('is_in_stock');
         $data['stock']=(int)($data['stock']??0);
+        $data['stock_quantity']=$data['stock'];
+
+        if ($data['track_inventory']) {
+            $data['is_in_stock']=$data['stock'] > 0;
+        }
         unset($data['collections'],$data['variants'],$data['images']);
         return $data;
     }
