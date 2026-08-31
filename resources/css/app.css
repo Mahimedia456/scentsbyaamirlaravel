@@ -504,3 +504,14 @@ footer input::placeholder {
     min-height: 45vh;
   }
 }
+
+/* 2026-08 production storefront correction */
+.header-logo { min-width: 0; }
+.header-logo img { width: 100% !important; height: 100% !important; max-width: 250px !important; max-height: 52px !important; object-fit: contain !important; }
+.house-page-loader__mark { margin: 0 auto 22px; font-family: "Cormorant Garamond", Georgia, serif; font-size: 44px; line-height: 1; letter-spacing: -.06em; }
+.home-luxury-hero img { transform: translateZ(0); }
+@media (max-width: 639px) {
+  .header-logo { width: min(154px, 42vw) !important; height: 40px !important; }
+  .header-logo img { max-width: 154px !important; max-height: 40px !important; }
+  .house-page-loader { display: none !important; }
+}

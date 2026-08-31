@@ -7,12 +7,3 @@
 !.env.example
 /.idea
 /.vscode
-
-*.zip
-/vendor/
-/node_modules/
-/.env
-/storage/logs/*
-/storage/framework/cache/*
-/storage/framework/sessions/*
-/storage/framework/views/*

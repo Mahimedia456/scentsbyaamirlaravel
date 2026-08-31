@@ -23,51 +23,25 @@
 @section('description', 'Modern fine fragrance shaped through atmosphere, material and memory.')
 
 @section('content')
-<section class="home-editorial-hero relative min-h-screen overflow-hidden text-white">
-    <div class="absolute inset-0 opacity-[.035]" style="background-image:linear-gradient(rgba(255,255,255,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.8) 1px,transparent 1px);background-size:64px 64px"></div>
-    <div class="absolute -left-24 top-1/3 h-72 w-72 rounded-full border border-white/10"></div>
-    <div class="absolute right-[8%] top-[16%] h-40 w-40 rounded-full border border-white/10"></div>
-
-    <div class="house-container relative grid min-h-screen items-center gap-12 pb-14 pt-[128px] lg:grid-cols-[.9fr_1.1fr] lg:gap-16 lg:pb-16 lg:pt-[138px]">
-        <div class="relative z-10 max-w-3xl" data-reveal>
-            <div class="flex items-center gap-4">
-                <span class="h-px w-10 bg-white/35"></span>
-                <p class="ui-label text-white/55">The House / New Chapter</p>
-            </div>
-            <h1 class="mt-7 display-serif text-[4.4rem] leading-[.82] tracking-[-.055em] sm:text-[7rem] lg:text-[8.6rem]">
-                Scent,<br><span class="italic text-[#d8c5a3]">remembered.</span>
-            </h1>
-            <p class="mt-8 max-w-xl text-[15px] leading-7 text-white/62">
-                Modern fine fragrance composed through atmosphere, material and memory. Discover the latest edit from Scents by Aamir.
-            </p>
-            <div class="mt-10 flex flex-wrap gap-3">
-                <a href="{{ route('shop') }}" class="btn-solid bg-white text-black hover:bg-[#d8c5a3]">Explore fragrances</a>
-                <a href="{{ route('finder') }}" class="btn-outline border-white/45 text-white hover:bg-white hover:text-black">Find your scent</a>
-            </div>
-            <div class="mt-12 grid max-w-xl grid-cols-3 border-t border-white/15 pt-5 text-white/45">
-                <div><p class="ui-label">01</p><p class="mt-2 text-xs">Fine fragrance</p></div>
-                <div><p class="ui-label">02</p><p class="mt-2 text-xs">Small-batch edit</p></div>
-                <div><p class="ui-label">03</p><p class="mt-2 text-xs">Made to linger</p></div>
+<section class="home-luxury-hero relative overflow-hidden bg-[#0a0a0a] text-white">
+    <div class="house-container grid min-h-[82vh] items-stretch px-0 pt-[102px] sm:pt-[108px] lg:grid-cols-[.82fr_1.18fr] lg:px-10 xl:px-12">
+        <div class="order-2 flex items-end bg-[#0a0a0a] px-5 py-12 sm:px-8 lg:order-1 lg:px-0 lg:pb-16 lg:pr-14 lg:pt-16">
+            <div class="max-w-2xl" data-reveal>
+                <div class="flex items-center gap-4"><span class="h-px w-10 bg-[#c9ad7a]"></span><p class="ui-label text-white/50">Scents by Aamir / The House</p></div>
+                <h1 class="mt-7 display-serif text-[3.8rem] leading-[.86] tracking-[-.055em] sm:text-[5.8rem] xl:text-[7.2rem]">Fragrance,<br><span class="italic text-[#d2bd98]">made personal.</span></h1>
+                <p class="mt-7 max-w-lg text-[14px] leading-7 text-white/60">A considered wardrobe of modern perfume — composed through material, atmosphere and memory.</p>
+                <div class="mt-9 flex flex-wrap gap-3"><a href="{{ route('shop') }}" class="btn-solid bg-white text-black hover:bg-[#d2bd98]">Shop fragrances</a><a href="{{ route('finder') }}" class="btn-outline border-white/35 text-white hover:bg-white hover:text-black">Find your scent</a></div>
+                <div class="mt-12 flex max-w-lg items-center justify-between border-t border-white/15 pt-5"><div><p class="ui-label text-white/35">House selection</p><p class="mt-2 text-xs text-white/60">{{ max(1,$products->count()) }} fragrances</p></div>@if(!empty($heroProduct['slug']))<a href="{{ route('product.show',$heroProduct['slug']) }}" class="ui-label text-white/65">Featured scent →</a>@endif</div>
             </div>
         </div>
-
-        <div class="relative flex min-h-[52vh] items-center justify-center lg:min-h-[70vh]" data-reveal>
-            <div class="home-editorial-hero__image-shell relative flex h-full min-h-[52vh] w-full max-w-[640px] items-center justify-center overflow-hidden rounded-[2px] p-8 sm:p-14 lg:min-h-[70vh]">
-                <div class="absolute inset-x-8 top-8 flex items-center justify-between text-[9px] uppercase tracking-[.28em] text-white/38">
-                    <span>House Selection</span><span>{{ str_pad((string) max(1,$products->count()),2,'0',STR_PAD_LEFT) }} fragrances</span>
-                </div>
-                @if($heroImage)
-                    <img src="{{ $heroImage }}" alt="{{ $heroProduct['name'] ?? 'Scents by Aamir fragrance' }}" class="home-editorial-hero__image max-h-[58vh] w-full object-contain" fetchpriority="high">
-                @else
-                    <div class="flex aspect-[3/4] w-[52%] items-center justify-center border border-white/15 bg-white/[.035]">
-                        <div class="text-center"><p class="display-serif text-5xl">SBA</p><p class="mt-3 ui-label text-white/35">Fragrance image</p></div>
-                    </div>
-                @endif
-                <div class="absolute inset-x-8 bottom-8 flex items-end justify-between gap-6 border-t border-white/12 pt-5">
-                    <div><p class="ui-label text-white/38">Featured fragrance</p><p class="mt-2 display-serif text-3xl">{{ $heroProduct['name'] ?? 'House Selection' }}</p></div>
-                    @if(!empty($heroProduct['slug']))<a href="{{ route('product.show',$heroProduct['slug']) }}" class="ui-label whitespace-nowrap">Discover →</a>@endif
-                </div>
-            </div>
+        <div class="order-1 relative min-h-[58vh] overflow-hidden bg-[#d8d2c7] lg:order-2 lg:min-h-[82vh]" data-reveal>
+            @if($heroImage)
+                <img src="{{ $heroImage }}" alt="{{ $heroProduct['name'] ?? 'Scents by Aamir fragrance' }}" class="absolute inset-0 h-full w-full object-cover object-center" fetchpriority="high">
+            @else
+                <div class="absolute inset-0 bg-[radial-gradient(circle_at_55%_42%,#d8c6a8_0,#8b765d_30%,#171513_72%)]"></div>
+            @endif
+            <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10"></div>
+            <div class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-6 p-5 text-white sm:p-8 lg:p-10"><div><p class="ui-label text-white/55">Featured fragrance</p><h2 class="mt-2 display-serif text-4xl sm:text-5xl">{{ $heroProduct['name'] ?? 'House Selection' }}</h2></div>@if(!empty($heroProduct['slug']))<a href="{{ route('product.show',$heroProduct['slug']) }}" class="hidden ui-label sm:block">Discover →</a>@endif</div>
         </div>
     </div>
 </section>
