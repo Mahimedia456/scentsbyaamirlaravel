@@ -296,7 +296,16 @@ document.addEventListener('alpine:init', () => {
   });
 });
 
+
 Alpine.start();
+
+// Robust cart entry-point used by the header. If Alpine is available the drawer
+// opens; the header still has /cart as a normal href fallback when JS fails.
+window.addEventListener('sba:open-cart', () => {
+  const commerce = window.Alpine?.store('commerce');
+  if (commerce) commerce.cartOpen = true;
+});
+
 
 document.addEventListener('DOMContentLoaded', () => {
   window.Alpine?.store('commerce')?.init();

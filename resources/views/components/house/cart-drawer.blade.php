@@ -2,7 +2,7 @@
     x-cloak
     x-show="$store.commerce.cartOpen"
     @keydown.escape.window="$store.commerce.cartOpen=false"
-    class="fixed inset-0 z-[90]"
+    class="fixed inset-0 z-[120] z-[90]"
 >
     <div class="absolute inset-0 bg-black/45 backdrop-blur-[2px]" @click="$store.commerce.cartOpen=false"></div>
 

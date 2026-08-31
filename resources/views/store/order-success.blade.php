@@ -1,6 +1,17 @@
 @extends('layouts.store')
 @section('title','Order received — Scents by Aamir')
 @section('content')
+<script>
+document.addEventListener('alpine:initialized', () => {
+    const store = window.Alpine?.store('commerce');
+    if (store) {
+        store.cart = [];
+        store.persist();
+        store.cartOpen = false;
+    }
+});
+localStorage.removeItem('sba_cart');
+</script>
 <section x-data x-init="$store.commerce.cart=[]; $store.commerce.persist(); $store.commerce.cartOpen=false" class="min-h-screen bg-[#f7f6f2] pt-[100px] text-black">
   <div class="house-container py-16 lg:py-24">
     <div class="mx-auto max-w-3xl bg-white p-8 sm:p-12">

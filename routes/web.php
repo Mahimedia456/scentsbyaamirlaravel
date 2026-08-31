@@ -127,6 +127,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Enterprise Admin Phase 04 — Orders & Customers
         Route::post('/orders/bulk', [\App\Http\Controllers\Admin\OrderController::class, 'bulk'])->name('orders.bulk');
+        Route::get('/orders/create', [\App\Http\Controllers\Admin\OrderController::class, 'create'])->name('orders.create');
+        Route::post('/orders', [\App\Http\Controllers\Admin\OrderController::class, 'store'])->name('orders.store');
+        Route::get('/orders/{order}/invoice', [\App\Http\Controllers\Admin\OrderController::class, 'invoice'])->name('orders.invoice');
         Route::resource('orders', \App\Http\Controllers\Admin\OrderController::class)->only(['index','show','update']);
         Route::post('/orders/{order}/payment/approve', [\App\Http\Controllers\Admin\OrderController::class, 'approvePayment'])->name('orders.payment.approve');
         Route::post('/orders/{order}/payment/reject', [\App\Http\Controllers\Admin\OrderController::class, 'rejectPayment'])->name('orders.payment.reject');

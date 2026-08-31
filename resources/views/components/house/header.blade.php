@@ -66,14 +66,14 @@
             <div class="flex min-w-0 items-center justify-end gap-3 lg:gap-7">
                 <a href="{{ route('account') }}" class="ui-label hidden xl:block">Account</a>
                 <a href="{{ route('wishlist') }}" class="ui-label hidden md:block">Wishlist</a>
-                <button
-                    type="button"
-                    @click="$store.commerce.cartOpen=true"
-                    class="ui-label whitespace-nowrap"
+                <a
+                    href="{{ route('cart') }}"
+                    @click.prevent="$store.commerce.cartOpen=true; window.dispatchEvent(new CustomEvent('sba:open-cart'))"
+                    class="house-header-action"
                     aria-label="Open cart"
                 >
                     Cart <span class="hidden sm:inline">(<span x-text="$store.commerce.count">0</span>)</span>
-                </button>
+                </a>
             </div>
         </div>
     </header>
