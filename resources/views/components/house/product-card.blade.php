@@ -13,7 +13,7 @@
 @php
     if (is_array($product)) {
         $slug = $slug ?: ($product['slug'] ?? null);
-        $name = $name ?: ($product['name'] ?? 'Fragrance');
+        $name = $name ?: ($product['display_name'] ?? $product['name'] ?? 'Fragrance');
         $family = $family ?: ($product['family'] ?? 'Fine Fragrance');
         $price = $price ?: ($product['price'] ?? '0');
         $badge = $badge ?? ($product['badge'] ?? null);

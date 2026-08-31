@@ -17,6 +17,99 @@ const loadStoredArray = (key) => {
   }
 };
 
+
+document.addEventListener('alpine:init', () => {
+  Alpine.data('catalogAjax', (options = {}) => ({
+    filters: false,
+    sort: false,
+    mobileFilters: false,
+    loading: false,
+    activeAudience: options.initialAudience || '',
+    activeEdit: options.initialEdit || '',
+    endpoint: options.endpoint || '/shop',
+    controller: null,
+
+    init() {
+      this._popstateHandler = () => {
+        const url = new URL(window.location.href);
+        this.activeAudience = url.searchParams.get('audience') || '';
+        this.activeEdit = url.searchParams.get('edit') || '';
+        this.fetchResults(url.toString(), false);
+      };
+
+      window.addEventListener('popstate', this._popstateHandler);
+    },
+
+    isActive(audience = '', edit = '') {
+      return this.activeAudience === audience && this.activeEdit === edit;
+    },
+
+    loadEdit(audience = '', edit = '', url = null) {
+      const target = new URL(url || this.endpoint, window.location.origin);
+
+      if (audience) target.searchParams.set('audience', audience);
+      else target.searchParams.delete('audience');
+
+      if (edit) target.searchParams.set('edit', edit);
+      else target.searchParams.delete('edit');
+
+      target.searchParams.delete('q');
+      target.searchParams.delete('category');
+      target.searchParams.delete('collection');
+      target.searchParams.delete('availability');
+      target.searchParams.delete('min_price');
+      target.searchParams.delete('max_price');
+
+      this.activeAudience = audience;
+      this.activeEdit = edit;
+      this.fetchResults(target.toString(), true);
+    },
+
+    async fetchResults(url, updateHistory = true) {
+      if (this.controller) this.controller.abort();
+      this.controller = new AbortController();
+      this.loading = true;
+
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          signal: this.controller.signal,
+        });
+
+        if (!response.ok) throw new Error(`Catalog request failed: ${response.status}`);
+
+        const payload = await response.json();
+
+        if (this.$refs.results && typeof payload.html === 'string') {
+          this.$refs.results.innerHTML = payload.html;
+
+          if (window.Alpine?.initTree) {
+            window.Alpine.initTree(this.$refs.results);
+          }
+        }
+
+        const resolved = new URL(payload.url || url, window.location.origin);
+        this.activeAudience = resolved.searchParams.get('audience') || '';
+        this.activeEdit = resolved.searchParams.get('edit') || '';
+
+        if (updateHistory) {
+          window.history.pushState({}, '', `${resolved.pathname}${resolved.search}`);
+        }
+      } catch (error) {
+        if (error?.name !== 'AbortError') {
+          window.location.href = url;
+        }
+      } finally {
+        this.loading = false;
+      }
+    },
+  }));
+});
+
 document.addEventListener('alpine:init', () => {
   Alpine.store('commerce', {
     cart: loadStoredArray('sba_cart').map((item) => ({

@@ -13,12 +13,12 @@ Route::get('/product/{slug}', [StorefrontCatalogController::class, 'product'])->
 
 Route::get('/search', [\App\Http\Controllers\Storefront\DiscoveryController::class, 'search'])->name('search');
 Route::get('/fragrance-finder', [\App\Http\Controllers\Storefront\DiscoveryController::class, 'finder'])->name('finder');
-Route::view('/ingredients', 'store.ingredients')->name('ingredients');
 
-Route::get('/ingredients/{slug}', function (string $slug) {
-    abort_unless(config("storefront.ingredients.$slug"), 404);
-    return view('store.ingredient-detail', compact('slug'));
-})->name('ingredients.show');
+Route::get('/ingredients', [StorefrontCatalogController::class, 'ingredients'])->name('ingredients');
+Route::get('/ingredients/{slug}', [StorefrontCatalogController::class, 'ingredient'])->name('ingredients.show');
+
+Route::get('/families', [StorefrontCatalogController::class, 'families'])->name('families');
+Route::get('/families/{slug}', [StorefrontCatalogController::class, 'family'])->name('families.show');
 
 Route::get('/journal', [\App\Http\Controllers\Storefront\ContentController::class, 'journal'])->name('journal');
 Route::get('/journal/{slug}', [\App\Http\Controllers\Storefront\ContentController::class, 'journalPost'])->name('journal.show');

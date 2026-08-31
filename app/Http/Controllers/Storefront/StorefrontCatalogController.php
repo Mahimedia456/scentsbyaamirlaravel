@@ -20,15 +20,26 @@ class StorefrontCatalogController extends Controller
 
     public function shop(Request $request)
     {
-        return view('store.shop', [
-            'products' => $this->catalog->allProducts([
-                'category' => $request->string('category')->toString(),
-                'collection' => $request->string('collection')->toString(),
-                'sort' => $request->string('sort')->toString() ?: 'featured',
-            ]),
+        $filters = $this->shopFilters($request);
+
+        $payload = [
+            'products' => $this->catalog->allProducts($filters),
             'collections' => $this->catalog->collections(),
-            'activeSort' => $request->string('sort')->toString() ?: 'featured',
-        ]);
+            'categories' => $this->catalog->categories(),
+            'filters' => $filters,
+            'activeSort' => $filters['sort'],
+        ];
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'html' => view('store.partials.catalog-results', $payload)->render(),
+                'count' => $payload['products']->count(),
+                'filters' => $filters,
+                'url' => $request->fullUrl(),
+            ]);
+        }
+
+        return view('store.shop', $payload);
     }
 
     public function collections()
@@ -41,7 +52,65 @@ class StorefrontCatalogController extends Controller
         $collection = $this->catalog->collection($slug);
         abort_unless($collection, 404);
 
-        return view('store.collection-detail', ['collectionData' => $collection, 'slug' => $slug]);
+        return view('store.collection-detail', [
+            'collectionData' => $collection,
+            'slug' => $slug,
+        ]);
+    }
+
+    public function ingredients()
+    {
+        $definitions = collect(config('storefront.ingredients', []));
+
+        $ingredients = $definitions->map(function (array $ingredient, string $slug) {
+            $products = $this->catalog->allProducts(['family' => $slug]);
+
+            return array_merge($ingredient, [
+                'slug' => $slug,
+                'products_count' => $products->count(),
+            ]);
+        })->values();
+
+        return view('store.ingredients', compact('ingredients'));
+    }
+
+    public function ingredient(string $slug)
+    {
+        $ingredient = config("storefront.ingredients.{$slug}");
+        abort_unless($ingredient, 404);
+
+        $products = $this->catalog->allProducts(['family' => $slug]);
+
+        return view('store.ingredient-detail', [
+            'slug' => $slug,
+            'ingredient' => array_merge($ingredient, ['slug' => $slug]),
+            'products' => $products,
+        ]);
+    }
+
+    public function families()
+    {
+        $families = collect(config('storefront.fragrance_families', []))
+            ->map(function (array $family, string $slug) {
+                return array_merge($family, [
+                    'slug' => $slug,
+                    'products_count' => $this->catalog->allProducts(['family' => $slug])->count(),
+                ]);
+            })->values();
+
+        return view('store.families', compact('families'));
+    }
+
+    public function family(string $slug)
+    {
+        $family = config("storefront.fragrance_families.{$slug}");
+        abort_unless($family, 404);
+
+        return view('store.family-detail', [
+            'slug' => $slug,
+            'family' => array_merge($family, ['slug' => $slug]),
+            'products' => $this->catalog->allProducts(['family' => $slug]),
+        ]);
     }
 
     public function product(string $slug)
@@ -54,5 +123,21 @@ class StorefrontCatalogController extends Controller
             'productData' => $product,
             'relatedProducts' => $this->catalog->related($slug, $product['category_id'], 4),
         ]);
+    }
+
+    private function shopFilters(Request $request): array
+    {
+        return [
+            'search' => trim($request->string('q')->toString()),
+            'audience' => $request->string('audience')->toString(),
+            'family' => $request->string('family')->toString(),
+            'category' => $request->string('category')->toString(),
+            'collection' => $request->string('collection')->toString(),
+            'availability' => $request->string('availability')->toString(),
+            'edit' => $request->string('edit')->toString(),
+            'min_price' => $request->filled('min_price') ? (float) $request->input('min_price') : null,
+            'max_price' => $request->filled('max_price') ? (float) $request->input('max_price') : null,
+            'sort' => $request->string('sort')->toString() ?: 'featured',
+        ];
     }
 }

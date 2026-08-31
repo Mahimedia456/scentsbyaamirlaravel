@@ -36,16 +36,10 @@ jobs:
           SSH_HOST: ${{ secrets.STACKCP_HOST }}
         run: |
           mkdir -p ~/.ssh
-
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
-
           chmod 600 ~/.ssh/id_ed25519
-
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
-
-          echo "Checking private key format..."
           ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
-
           echo "SSH key loaded successfully."
 
       - name: Test StackCP SSH connection
@@ -70,36 +64,16 @@ jobs:
             -i ~/.ssh/id_ed25519 \
             "$SSH_USER@$SSH_HOST" "
               set -e
-
               cd '$APP_PATH'
-
-              echo '========================================'
-              echo 'Scents by Aamir deployment starting'
-              echo '========================================'
-
-              echo '--- Current directory ---'
-              pwd
-
-              echo '--- Fetching latest GitHub source ---'
               git fetch origin main
-
-              echo '--- Switching production to latest main ---'
               git reset --hard origin/main
-
-              echo '--- Installing Composer dependencies ---'
               /usr/php84/usr/bin/php /usr/local/bin/composer install \
                 --no-dev \
                 --no-interaction \
                 --prefer-dist \
                 --optimize-autoloader
-
-              echo '--- Clearing Laravel caches ---'
               /usr/php84/usr/bin/php artisan optimize:clear
-
-              echo '--- Running database migrations ---'
               /usr/php84/usr/bin/php artisan migrate --force
-
-              echo '--- Laravel source deployment complete ---'
             "
 
       - name: Upload compiled Vite assets
@@ -108,8 +82,6 @@ jobs:
           SSH_USER: ${{ secrets.STACKCP_USER }}
           APP_PATH: ${{ secrets.STACKCP_APP_PATH }}
         run: |
-          echo "Uploading compiled Vite assets..."
-
           ssh \
             -i ~/.ssh/id_ed25519 \
             "$SSH_USER@$SSH_HOST" \
@@ -122,8 +94,6 @@ jobs:
             public/build/ \
             "$SSH_USER@$SSH_HOST:$APP_PATH/public/build/"
 
-          echo "Vite assets uploaded successfully."
-
       - name: Warm Laravel caches
         env:
           SSH_HOST: ${{ secrets.STACKCP_HOST }}
@@ -134,19 +104,8 @@ jobs:
             -i ~/.ssh/id_ed25519 \
             "$SSH_USER@$SSH_HOST" "
               set -e
-
               cd '$APP_PATH'
-
-              echo '--- Caching routes ---'
               /usr/php84/usr/bin/php artisan route:cache
-
-              echo '--- Caching Blade views ---'
               /usr/php84/usr/bin/php artisan view:cache
-
-              echo '--- Deployment status ---'
               /usr/php84/usr/bin/php artisan about
-
-              echo '========================================'
-              echo 'Scents by Aamir deployment successful'
-              echo '========================================'
             "

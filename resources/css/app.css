@@ -515,3 +515,130 @@ footer input::placeholder {
   .header-logo img { max-width: 154px !important; max-height: 40px !important; }
   .house-page-loader { display: none !important; }
 }
+
+/* 2026-08 final home-page polish — preserves the existing house system */
+[x-cloak] { display: none !important; }
+
+.sba-home-hero {
+  isolation: isolate;
+}
+
+.sba-home-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: rgba(255,255,255,.12);
+  z-index: 30;
+}
+
+.sba-home-hero img,
+.sba-editorial-card img {
+  transform: scale(1.001);
+  transition: transform 1.1s cubic-bezier(.2,.7,.2,1), filter .6s ease;
+}
+
+.sba-editorial-card:hover img {
+  transform: scale(1.035);
+}
+
+.sba-hero-arrow {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 17px;
+  transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+}
+
+.sba-hero-arrow:hover {
+  background: #fff;
+  color: #0a0a0a;
+  border-color: #fff;
+}
+
+@media (max-width: 767px) {
+  .sba-home-hero .display-serif {
+    text-wrap: balance;
+  }
+
+  .sba-editorial-card {
+    min-height: 430px;
+  }
+}
+
+
+/* 2026-08 Phase 02 — Collections polish */
+.house-page-loader__logo {
+  display: block !important;
+  width: min(210px, 58vw) !important;
+  height: 56px !important;
+  max-width: 210px !important;
+  max-height: 56px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+.sba-collection-card img {
+  transform: scale(1.001);
+  transition: transform 1.05s cubic-bezier(.2,.7,.2,1), filter .5s ease;
+}
+
+.sba-collection-card:hover img {
+  transform: scale(1.035);
+}
+
+@media (max-width: 639px) {
+  .house-page-loader {
+    display: grid !important;
+  }
+
+  .house-page-loader__inner {
+    width: min(230px, 68vw);
+  }
+
+  .house-page-loader__logo {
+    width: min(170px, 52vw) !important;
+    height: 46px !important;
+    max-width: 170px !important;
+    max-height: 46px !important;
+  }
+}
+
+
+/* 2026-08 Phase 03 — AJAX catalogue + ingredients/families */
+.sba-catalog-tabbar {
+  scrollbar-width: none;
+}
+.sba-catalog-tabbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .sba-catalog-tabbar nav {
+    justify-content: center;
+  }
+}
+
+.house-page-loader__logo {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+
+/* 2026-08 Phase 04 — Product detail final polish */
+.sba-product-media-strip {
+  scrollbar-width: none;
+}
+.sba-product-media-strip::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  [x-data] .pdp-sticky-buy {
+    position: static !important;
+  }
+}
