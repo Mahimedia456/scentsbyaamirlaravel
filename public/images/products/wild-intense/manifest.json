@@ -1,0 +1,23 @@
+{
+    "product_id": 28,
+    "slug": "wild-intense",
+    "name": "Wild Intense | Most Popular Perfume for Men",
+    "category": "Men's",
+    "sku": "WI-001",
+    "description": "Wild Intense, inspired by the legendary Dior Sauvage, captures the spirit of rugged masculinity and untamed freedom. This exceptional fragrance opens with the crisp zest of bergamot and peppery spice, leading to a heart of lavender and geranium enriched with Sichuan pepper. Base notes of ambroxan, cedar, and labdanum ensure a trail that is as enduring as it is captivating. Crafted with precision and featuring a 40-50% perfume oil concentration, Wild Intense offers unmatched longevity and projection. Whether you're commanding the boardroom or exploring the great outdoors, this scent ensures you leave a lasting impression. Features Premium 40-50% oil concentration for enhanced longevity Inspired by Dior Sauvage, offering a bold and magnetic aroma Perfect for everyday wear and special occasions Fragrance Notes Top Notes: Bergamot, Pepper Heart Notes: Sichuan Pepper, Lavender, Geranium, Vetiver Base Notes: Ambroxan, Cedar, Labdanum Materials & Care Store in a cool, dry place. Avoid exposure to direct sunlight to maintain quality. Keep away from excessive heat to preserve fragrance integrity.",
+    "story": "Wild Intense, inspired by the legendary Dior Sauvage, captures the spirit of rugged masculinity and untamed freedom. This exceptional fragrance opens with the crisp zest of bergamot and peppery spice, leading to a heart of lavender and geranium enriched with Sichuan pepper. Base notes of ambroxan, cedar, and labdanum ensure a trail that is as enduring as it is captivating.",
+    "notes": "",
+    "variants": [],
+    "images": [
+        "products/imported/28/67fb5e13-23be-4ace-bc3c-6d8f56f38df5.jpg",
+        "products/imported/28/ff107e97-e0fd-4211-bab5-f09b90401fc0.svg",
+        "products/imported/28/297ce419-b2cd-4718-b39b-54c63342dbb8.svg",
+        "products/imported/28/02df4a3b-c44f-464e-b2dc-edffa94d372c.svg"
+    ],
+    "artwork": {
+        "hero": "images/products/wild-intense/hero.webp",
+        "notes": "images/products/wild-intense/notes.webp",
+        "world": "images/products/wild-intense/world.webp",
+        "story": "images/products/wild-intense/story.webp"
+    }
+}

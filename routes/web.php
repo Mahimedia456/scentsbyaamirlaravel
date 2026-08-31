@@ -20,9 +20,12 @@ Route::get('/ingredients/{slug}', [StorefrontCatalogController::class, 'ingredie
 Route::get('/families', [StorefrontCatalogController::class, 'families'])->name('families');
 Route::get('/families/{slug}', [StorefrontCatalogController::class, 'family'])->name('families.show');
 
+Route::get('/about', [\App\Http\Controllers\Storefront\ContentController::class, 'about'])->name('about');
+
 Route::get('/journal', [\App\Http\Controllers\Storefront\ContentController::class, 'journal'])->name('journal');
 Route::get('/journal/{slug}', [\App\Http\Controllers\Storefront\ContentController::class, 'journalPost'])->name('journal.show');
 
+Route::view('/cart', 'store.cart')->name('cart');
 Route::view('/wishlist', 'store.wishlist')->name('wishlist');
 Route::middleware('guest:customer')->group(function () {
     Route::get('/account/login', [\App\Http\Controllers\Storefront\CustomerAuthController::class, 'login'])->name('customer.login');
@@ -43,12 +46,14 @@ Route::middleware('customer')->group(function () {
     Route::get('/checkout/success/{order}', [\App\Http\Controllers\Storefront\CheckoutController::class, 'success'])->name('checkout.success');
     Route::post('/account/logout', [\App\Http\Controllers\Storefront\CustomerAuthController::class, 'logout'])->name('customer.logout');
 });
-Route::view('/gifting', 'store.gifting')->name('gifting');
+Route::get('/gifting', [StorefrontCatalogController::class, 'gifting'])->name('gifting');
 Route::view('/services', 'store.services')->name('services');
 
 Route::get('/contact', [\App\Http\Controllers\Storefront\OperationsController::class, 'contact'])->name('contact');
 Route::post('/contact', [\App\Http\Controllers\Storefront\OperationsController::class, 'contactStore'])->middleware('throttle:10,1')->name('contact.store');
 Route::post('/newsletter', [\App\Http\Controllers\Storefront\OperationsController::class, 'newsletter'])->middleware('throttle:10,1')->name('newsletter.store');
+
+Route::get('/faq', fn(\App\Services\StorefrontContentService $content) => ($page=$content->page('faq')) ? view('store.info-page',compact('page')) : abort(404))->name('faq');
 
 Route::get('/shipping', fn(\App\Services\StorefrontContentService $content) => ($page=$content->page('shipping')) ? view('store.info-page',compact('page')) : abort(404))->name('shipping');
 
@@ -151,3 +156,5 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/logout', [\App\Http\Controllers\Admin\AuthController::class, 'destroy'])->name('logout');
     });
 });
+
+Route::get('/sitemap.xml', [\App\Http\Controllers\Storefront\SitemapController::class, 'index'])->name('sitemap');

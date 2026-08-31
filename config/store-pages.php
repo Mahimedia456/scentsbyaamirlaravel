@@ -1,6 +1,42 @@
 <?php
 
 return [
+    'faq' => [
+        'eyebrow' => 'Customer Care',
+        'title' => 'Frequently Asked Questions',
+        'intro' => 'Quick answers about fragrance selection, orders, delivery, gifting and care.',
+        'theme' => 'light',
+        'sections' => [
+            ['title'=>'How do I choose a fragrance?','copy'=>'Use the Fragrance Finder, browse by family and ingredients, or contact customer care with the mood and materials you enjoy.'],
+            ['title'=>'Can I try fragrances first?','copy'=>'Where available, tester and discovery boxes are listed in Gifting and use the live catalogue.'],
+            ['title'=>'How can I track an order?','copy'=>'Signed-in customers can review My Account. Track Order also accepts the order number and matching email or phone.'],
+            ['title'=>'Which payment methods are available?','copy'=>'Checkout displays only payment methods currently enabled by the store.'],
+            ['title'=>'Can I send a fragrance as a gift?','copy'=>'Eligible orders can include signature gift presentation and a private message during checkout.'],
+            ['title'=>'What if I need help after ordering?','copy'=>'Use Contact & Support and include your order number so customer care can locate the purchase quickly.'],
+        ],
+    ],
+
+    'about' => [
+        'eyebrow' => 'Our House',
+        'title' => 'Scents by Aamir',
+        'intro' => 'A fragrance house shaped by memory, material and the belief that scent should feel deeply personal.',
+        'theme' => 'dark',
+        'sections' => [
+            [
+                'title' => 'A personal beginning',
+                'copy' => 'Scents by Aamir began with a simple idea: fragrance should not feel distant. It should feel familiar, expressive and connected to the person wearing it.',
+            ],
+            [
+                'title' => 'Materials with character',
+                'copy' => 'Oud, florals, woods, citrus, amber and spice are selected for the atmosphere they create together, not simply for how impressive they sound on a note list.',
+            ],
+            [
+                'title' => 'Built to be worn',
+                'copy' => 'The house balances presence with wearability, creating compositions intended to live naturally on skin from first spray through the final dry-down.',
+            ],
+        ],
+    ],
+
     'contact' => [
         'eyebrow' => 'Customer Care',
         'title' => 'Contact & Support',

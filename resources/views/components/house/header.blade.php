@@ -31,7 +31,7 @@
         </div>
     </header>
 
-    <div x-cloak x-show="menu" x-transition.opacity.duration.220ms class="fixed inset-x-0 bottom-0 top-[102px] z-[90] overflow-y-auto bg-[#f7f6f2] text-black shadow-[0_24px_70px_rgba(0,0,0,.18)]" role="dialog" aria-modal="true" aria-label="Main menu">
+    <div x-cloak x-show="menu" x-transition.opacity.duration.220ms class="fixed inset-x-0 bottom-0 top-[102px] z-[90] overflow-hidden bg-[#f7f6f2] text-black shadow-[0_24px_70px_rgba(0,0,0,.18)]" role="dialog" aria-modal="true" aria-label="Main menu">
         <div class="house-container min-h-full py-8 sm:py-10 lg:py-12">
             <div class="flex items-center justify-between border-b border-black/10 pb-6"><p class="ui-label text-black/35">Explore the house</p><button @click="menu=false" class="ui-label min-h-[42px] px-2">Close</button></div>
             <div class="grid gap-10 py-8 lg:grid-cols-[1.05fr_.95fr] lg:gap-14 lg:py-10">
@@ -61,3 +61,5 @@
         </div>
     </div>
 </div>
+
+<x-house.mega-menu />

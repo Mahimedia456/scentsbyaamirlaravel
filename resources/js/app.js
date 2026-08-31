@@ -1,3 +1,11 @@
+document.addEventListener('alpine:init', () => {
+  Alpine.store('site', {
+    megaOpen: false,
+    toggleMega() { this.megaOpen = !this.megaOpen },
+    closeMega() { this.megaOpen = false },
+  });
+});
+
 import Alpine from 'alpinejs';
 import Lenis from 'lenis';
 import gsap from 'gsap';
@@ -122,6 +130,7 @@ document.addEventListener('alpine:init', () => {
       available: item.available !== false,
     })),
     wishlist: loadStoredArray('sba_wishlist'),
+    recentlyViewed: loadStoredArray('sba_recently_viewed'),
     cartOpen: false,
     syncing: false,
     notice: '',
@@ -137,6 +146,7 @@ document.addEventListener('alpine:init', () => {
     persist() {
       localStorage.setItem('sba_cart', JSON.stringify(this.cart));
       localStorage.setItem('sba_wishlist', JSON.stringify(this.wishlist));
+      localStorage.setItem('sba_recently_viewed', JSON.stringify(this.recentlyViewed));
       localStorage.setItem('sba_commerce_version', String(commerceStorageVersion));
     },
 
@@ -223,6 +233,19 @@ document.addEventListener('alpine:init', () => {
       });
       this.persist();
       this.syncWishlist();
+    },
+
+    rememberViewed(product) {
+      const normalized = {...product, product_id: product.product_id ?? product.id ?? null, price_value: moneyValue(product.price_value ?? product.price), viewed_at: Date.now()};
+      this.recentlyViewed = this.recentlyViewed.filter((item) => normalized.product_id ? Number(item.product_id ?? item.id) !== Number(normalized.product_id) : item.slug !== normalized.slug);
+      this.recentlyViewed.unshift(normalized);
+      this.recentlyViewed = this.recentlyViewed.slice(0, 8);
+      this.persist();
+    },
+
+    clearRecentlyViewed() {
+      this.recentlyViewed = [];
+      this.persist();
     },
 
     inWishlist(identifier) {

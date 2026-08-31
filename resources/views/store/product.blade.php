@@ -1,6 +1,8 @@
 @extends('layouts.store')
 
 @php
+    $finalProductMap = config('product-finalization.products.'.($product['slug'] ?? ''), []);
+
     $catalog = config('storefront.products');
     $slug = $slug ?? request()->route('slug');
     $visual = $productData ?? ($catalog[$slug] ?? []);
@@ -23,17 +25,75 @@
         $gallery->push($worldImage);
     }
 
-    $customCampaign = file_exists(public_path("images/products/{$slug}/campaign-world.webp"))
-        ? asset("images/products/{$slug}/campaign-world.webp")
-        : $worldImage;
+    /*
+    |--------------------------------------------------------------------------
+    | Product-specific final artwork
+    |--------------------------------------------------------------------------
+    | Phase 17 allows each fragrance to have its own hero/world/notes/story art.
+    | Existing imported product photography remains the fallback.
+    */
+    $productArtworkBase = "images/products/{$slug}";
+    $productHeroPath = "{$productArtworkBase}/hero.webp";
+    $productWorldPath = "{$productArtworkBase}/world.webp";
+    $productNotesPath = "{$productArtworkBase}/notes.webp";
+    $productStoryPath = "{$productArtworkBase}/story.webp";
 
-    $customRitual = file_exists(public_path("images/products/{$slug}/ritual.webp"))
-        ? asset("images/products/{$slug}/ritual.webp")
-        : null;
+    $productHero = file_exists(public_path($productHeroPath)) ? asset($productHeroPath) : null;
+    $productWorld = file_exists(public_path($productWorldPath)) ? asset($productWorldPath) : null;
+    $productNotesImage = file_exists(public_path($productNotesPath)) ? asset($productNotesPath) : null;
+    $productStoryImage = file_exists(public_path($productStoryPath)) ? asset($productStoryPath) : null;
 
-    $customNotes = file_exists(public_path("images/products/{$slug}/notes.webp"))
-        ? asset("images/products/{$slug}/notes.webp")
-        : null;
+    if ($productHero && !$gallery->contains($productHero)) {
+        $gallery->prepend($productHero);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Automatic product world
+    |--------------------------------------------------------------------------
+    | One family/world background is reused intelligently across products.
+    | The actual product image is layered above it, so there is no need to
+    | manually generate 3 extra images for every fragrance.
+    */
+    $worldHaystack = strtolower(implode(' ', array_filter([
+        $fullName,
+        $family,
+        $visual['notes'] ?? '',
+        $visual['story'] ?? '',
+        $visual['description'] ?? '',
+    ])));
+
+    $worldKey = $finalProductMap['world'] ??  match (true) {
+        str_contains($worldHaystack, 'oud') => 'oud',
+        str_contains($worldHaystack, 'smok') || str_contains($worldHaystack, 'leather') || str_contains($worldHaystack, 'dark') => 'dark',
+        str_contains($worldHaystack, 'rose') || str_contains($worldHaystack, 'floral') || str_contains($worldHaystack, 'jasmine') => 'floral',
+        str_contains($worldHaystack, 'citrus') || str_contains($worldHaystack, 'bergamot') || str_contains($worldHaystack, 'fresh') || str_contains($worldHaystack, 'ocean') => 'fresh',
+        str_contains($worldHaystack, 'vanilla') || str_contains($worldHaystack, 'gourmand') || str_contains($worldHaystack, 'sweet') || str_contains($worldHaystack, 'coffee') => 'gourmand',
+        str_contains($worldHaystack, 'amber') || str_contains($worldHaystack, 'resin') => 'amber',
+        str_contains($worldHaystack, 'spice') || str_contains($worldHaystack, 'saffron') || str_contains($worldHaystack, 'pepper') || str_contains($worldHaystack, 'cardamom') => 'spicy',
+        str_contains($worldHaystack, 'wood') || str_contains($worldHaystack, 'sandal') || str_contains($worldHaystack, 'cedar') => 'woody',
+        default => 'signature',
+    };
+
+    $worldBackgroundPath = "images/product-worlds/{$worldKey}.webp";
+    $worldBackground = $productWorld ?: (file_exists(public_path($worldBackgroundPath))
+        ? asset($worldBackgroundPath)
+        : (
+            $worldKey === 'fresh'
+                ? (config('storefront.campaigns.finder.image') ?? $worldImage)
+                : (
+                    in_array($worldKey, ['oud', 'dark', 'amber', 'spicy'], true)
+                        ? (config('storefront.campaigns.nocturnal.image') ?? $worldImage)
+                        : (config('storefront.campaigns.signature.image') ?? $worldImage)
+                )
+        ));
+
+    $ritualBackgroundPath = "images/product-worlds/ritual.webp";
+    $ritualBackground = $productStoryImage ?: (
+        file_exists(public_path($ritualBackgroundPath))
+            ? asset($ritualBackgroundPath)
+            : $worldBackground
+    );
 
     $theme = $visual['theme'] ?? [];
     $world = $visual['world'] ?? [];
@@ -47,8 +107,8 @@
     if ($variants->isEmpty()) {
         $variants = collect([[
             'id' => null,
-            'name' => '100 ML',
-            'size_label' => '100 ML',
+            'name' => '50 ML',
+            'size_label' => '50 ML',
             'sku' => $visual['sku'] ?? null,
             'price' => $price,
             'price_value' => $priceValue,
@@ -58,7 +118,7 @@
     }
 
     $defaultVariant = $variants->firstWhere('in_stock', true) ?: $variants->first();
-    $defaultSize = $defaultVariant['size_label'] ?? $defaultVariant['name'] ?? '100 ML';
+    $defaultSize = $defaultVariant['size_label'] ?? $defaultVariant['name'] ?? '50 ML';
     $inStock = $variants->contains(fn ($variant) => (bool) ($variant['in_stock'] ?? ((int) ($variant['stock'] ?? 0) > 0)));
 
     $story = trim((string) ($visual['story'] ?? ''))
@@ -127,12 +187,14 @@
     };
 
     $occasion = $world['occasion'] ?? 'Day into evening';
+    $notesEditorialImage = $productNotesImage ?: $worldBackground;
 @endphp
 
 @section('title', $name.' — Scents by Aamir')
 @section('description', \Illuminate\Support\Str::limit(strip_tags($story), 155))
 
 @section('content')
+<div x-data x-init="$store.commerce.rememberViewed(@js(['product_id'=>$product['id']??null,'slug'=>$product['slug']??null,'name'=>$product['display_name']??$product['name']??'Fragrance','family'=>$product['family']??null,'image'=>$product['image']??null,'price_value'=>$product['price_value']??$product['price']??0,'available'=>$product['available']??true]))" class="contents">
 <div
     x-data="{
         size: @js($defaultSize),
@@ -244,9 +306,9 @@
                     @endif
                 </div>
 
-                <div class="hidden gap-px bg-black/10 sm:grid-cols-2 lg:grid">
+                <div class="hidden gap-px bg-black/10 lg:grid lg:grid-cols-[1.12fr_.88fr]">
                     @forelse($gallery->take(4) as $index => $media)
-                        <figure class="group relative min-h-[650px] overflow-hidden bg-[#efeee9] xl:min-h-[760px]">
+                        <figure class="group relative min-h-[620px] overflow-hidden bg-[#efeee9] xl:min-h-[720px]">
                             <img
                                 src="{{ $media }}"
                                 alt="{{ $name }} image {{ $index + 1 }}"
@@ -501,20 +563,23 @@
                                 @endforeach
                             </div>
 
-                            @if($customNotes)
-                                <div class="relative min-h-[360px] overflow-hidden">
-                                    <img src="{{ $customNotes }}" alt="{{ $name }} note materials" class="absolute inset-0 h-full w-full object-cover" loading="lazy">
+                            <div class="relative min-h-[360px] overflow-hidden border border-white/12">
+                                @if($worldBackground)
+                                    <img
+                                        src="{{ $notesEditorialImage }}"
+                                        alt=""
+                                        class="absolute inset-0 h-full w-full object-cover opacity-55"
+                                        loading="lazy"
+                                    >
+                                @endif
+                                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-black/10"></div>
+                                <div class="absolute inset-x-0 bottom-0 p-7">
+                                    <p class="ui-label text-white/35">Automatic scent world</p>
+                                    <p class="mt-4 display-serif text-[34px] leading-[1.02]">
+                                        {{ ucfirst($worldKey) }} atmosphere selected from this fragrance’s real name, family, story and notes.
+                                    </p>
                                 </div>
-                            @else
-                                <div class="flex min-h-[360px] items-end border border-white/12 p-7">
-                                    <div>
-                                        <p class="ui-label text-white/30">The note structure</p>
-                                        <p class="mt-4 display-serif text-[34px] leading-[1.02]">
-                                            Materials are read as texture, temperature and atmosphere — not only as a list.
-                                        </p>
-                                    </div>
-                                </div>
-                            @endif
+                            </div>
                         </div>
                     </div>
 
@@ -561,16 +626,32 @@
     <section class="bg-[#f5f3ee] text-black">
         <div class="house-container py-4 sm:py-6 lg:py-10">
             <div class="grid overflow-hidden lg:grid-cols-[1.18fr_.82fr]">
-                <div class="relative min-h-[520px] lg:min-h-[700px]">
-                    @if($customCampaign)
+                <div class="relative min-h-[520px] overflow-hidden bg-[#171717] lg:min-h-[700px]">
+                    @if($worldBackground)
                         <img
-                            src="{{ $customCampaign }}"
-                            alt="{{ $name }} fragrance world"
+                            src="{{ $worldBackground }}"
+                            alt=""
                             loading="lazy"
                             decoding="async"
                             class="absolute inset-0 h-full w-full object-cover"
                         >
                     @endif
+
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_70%_45%,rgba(255,255,255,.06),transparent_32%),linear-gradient(90deg,rgba(0,0,0,.32),rgba(0,0,0,.02),rgba(0,0,0,.28))]"></div>
+
+                    @if($image)
+                        <img
+                            src="{{ $image }}"
+                            alt="{{ $name }}"
+                            loading="lazy"
+                            decoding="async"
+                            class="absolute inset-x-[18%] bottom-[7%] top-[7%] h-[86%] w-[64%] object-contain drop-shadow-[0_28px_42px_rgba(0,0,0,.48)]"
+                        >
+                    @endif
+
+                    <div class="absolute bottom-5 left-5 border border-white/15 bg-black/30 px-3 py-2 text-[8px] uppercase tracking-[.16em] text-white/55 backdrop-blur">
+                        {{ ucfirst($worldKey) }} world
+                    </div>
                 </div>
 
                 <div class="flex min-h-[420px] items-end bg-[var(--product-surface)] p-8 text-[var(--product-ink)] sm:p-12 lg:min-h-[700px] lg:p-14">
@@ -625,24 +706,16 @@
     {{-- RITUAL --}}
     <section class="grid bg-[#101010] text-white lg:grid-cols-2">
         <div class="relative min-h-[500px] overflow-hidden lg:min-h-[640px]">
-            @if($customRitual)
+            @if($ritualBackground)
                 <img
-                    src="{{ $customRitual }}"
-                    alt="{{ $name }} wearing ritual"
-                    loading="lazy"
-                    decoding="async"
-                    class="absolute inset-0 h-full w-full object-cover"
-                >
-            @elseif($image)
-                <img
-                    src="{{ $image }}"
-                    alt="{{ $name }}"
+                    src="{{ $ritualBackground }}"
+                    alt="Scents by Aamir fragrance ritual"
                     loading="lazy"
                     decoding="async"
                     class="absolute inset-0 h-full w-full object-cover"
                 >
             @endif
-            <div class="absolute inset-0 bg-black/10"></div>
+            <div class="absolute inset-0 bg-black/20"></div>
         </div>
 
         <div class="flex min-h-[500px] items-center p-8 sm:p-12 lg:min-h-[640px] lg:p-16">
@@ -693,5 +766,6 @@
             </div>
         </div>
     </section>
+</div>
 </div>
 @endsection

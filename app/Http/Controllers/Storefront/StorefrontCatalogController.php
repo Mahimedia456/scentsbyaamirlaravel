@@ -113,6 +113,37 @@ class StorefrontCatalogController extends Controller
         ]);
     }
 
+    public function gifting()
+    {
+        $products = $this->catalog->allProducts();
+
+        $testerBoxes = $products
+            ->filter(function ($product) {
+                $haystack = strtolower(implode(' ', array_filter([
+                    $product['display_name'] ?? $product['name'] ?? '',
+                    $product['name'] ?? '',
+                    $product['slug'] ?? '',
+                    $product['description'] ?? '',
+                ])));
+
+                return str_contains($haystack, 'tester')
+                    || str_contains($haystack, 'sample')
+                    || str_contains($haystack, 'discovery box');
+            })
+            ->values();
+
+        $giftEdit = $products
+            ->reject(fn ($product) => $testerBoxes->contains('slug', $product['slug'] ?? null))
+            ->sortByDesc(fn ($product) => (bool) ($product['is_featured'] ?? false))
+            ->take(6)
+            ->values();
+
+        return view('store.gifting', [
+            'testerBoxes' => $testerBoxes,
+            'giftEdit' => $giftEdit,
+        ]);
+    }
+
     public function product(string $slug)
     {
         $product = $this->catalog->product($slug);

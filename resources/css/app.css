@@ -642,3 +642,45 @@ footer input::placeholder {
     position: static !important;
   }
 }
+
+
+/* 2026-08 Phase 05 — Discovery + automatic product worlds */
+.sba-finder-choice {
+  transition: background-color .3s ease, color .3s ease, transform .3s ease;
+}
+.sba-finder-choice:hover {
+  transform: translateY(-1px);
+}
+
+.sba-auto-product-world img[alt=""] {
+  user-select: none;
+  pointer-events: none;
+}
+
+
+/* 2026-08 Phase 06 + 07 — House / Journal */
+.sba-editorial-copy {
+  text-wrap: pretty;
+}
+
+@media (max-width: 639px) {
+  article p {
+    overflow-wrap: anywhere;
+  }
+}
+
+
+/* 2026-08 Phase 08 + 09 — Gifting + live search */
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.sba-live-search-results {
+  transition: opacity .2s ease;
+}
+
+
+/* 2026-08 Phase 10–12 — Cart / Checkout / Account */
+[x-cloak] { display: none !important; }
+.sba-commerce-panel { contain: layout paint; }

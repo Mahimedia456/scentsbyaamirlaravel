@@ -303,7 +303,7 @@ class StorefrontCatalogService
     {
         $primary = $product->images->firstWhere('is_primary', true) ?: $product->images->first();
         $secondary = $product->images->first(fn ($image) => !$primary || $image->id !== $primary->id);
-        $variant = $product->variants->first();
+        $variant = $product->variants->first(fn ($item) => (int) ($item->stock ?? 0) > 0) ?: $product->variants->first();
         $visual = config("storefront.products.{$product->slug}", []);
 
         $price = $variant?->price ?? $product->base_price ?? 0;
@@ -345,16 +345,28 @@ class StorefrontCatalogService
             'stock' => $stock,
             'in_stock' => $stock > 0,
             'is_featured' => (bool) $product->is_featured,
-            'variants' => $product->variants->map(fn ($v) => [
-                'id' => $v->id,
-                'name' => $v->name,
-                'size_label' => $v->size_label ?: $v->name,
-                'sku' => $v->sku,
-                'price' => number_format((float) $v->price, 0),
-                'price_value' => (float) $v->price,
-                'stock' => (int) $v->stock,
-                'in_stock' => (int) $v->stock > 0,
-            ])->values()->all(),
+            'variants' => $product->variants
+                ->sortBy(function ($v) {
+                    $label = (string) ($v->size_label ?: $v->name ?: '');
+                    preg_match('/(\d+(?:\.\d+)?)/', $label, $matches);
+                    $size = isset($matches[1]) ? (float) $matches[1] : 9999;
+
+                    return [
+                        (int) $v->stock > 0 ? 0 : 1,
+                        $size,
+                        (int) ($v->sort_order ?? 0),
+                    ];
+                })
+                ->map(fn ($v) => [
+                    'id' => $v->id,
+                    'name' => $v->name,
+                    'size_label' => $v->size_label ?: $v->name,
+                    'sku' => $v->sku,
+                    'price' => number_format((float) $v->price, 0),
+                    'price_value' => (float) $v->price,
+                    'stock' => (int) $v->stock,
+                    'in_stock' => (int) $v->stock > 0,
+                ])->values()->all(),
         ];
     }
 

@@ -1,5 +1,37 @@
 @extends('layouts.store')
 @section('title','Create Account — Scents by Aamir')
 @section('content')
-<section class="min-h-screen bg-[#f7f6f2] pt-[120px] text-black"><div class="house-container grid gap-10 py-16 lg:grid-cols-2"><div><p class="ui-label text-black/35">Join the House</p><h1 class="mt-4 display-serif text-6xl sm:text-8xl">Your private account.</h1><p class="mt-6 max-w-md text-sm leading-7 text-black/50">Save your details and move through checkout with less friction.</p></div><form method="POST" action="{{ route('customer.register.store') }}" class="bg-white p-7 sm:p-10">@csrf<h2 class="display-serif text-4xl">Create account</h2>@if($errors->any())<div class="mt-5 border border-red-300 bg-red-50 p-4 text-sm text-red-700">{{ $errors->first() }}</div>@endif<div class="mt-7 grid gap-4 sm:grid-cols-2"><input name="first_name" value="{{ old('first_name') }}" required placeholder="First name" class="min-h-[54px] border border-black/15 px-4"><input name="last_name" value="{{ old('last_name') }}" placeholder="Last name" class="min-h-[54px] border border-black/15 px-4"><input name="email" type="email" value="{{ old('email') }}" required placeholder="Email" class="min-h-[54px] border border-black/15 px-4 sm:col-span-2"><input name="phone" value="{{ old('phone') }}" placeholder="Phone" class="min-h-[54px] border border-black/15 px-4 sm:col-span-2"><input name="password" type="password" required placeholder="Password" class="min-h-[54px] border border-black/15 px-4"><input name="password_confirmation" type="password" required placeholder="Confirm password" class="min-h-[54px] border border-black/15 px-4"><button class="btn-solid sm:col-span-2">Create account</button></div><p class="mt-6 text-sm text-black/50">Already registered? <a class="text-link" href="{{ route('customer.login') }}">Sign in</a></p></form></div></section>
+<section class="min-h-screen bg-[#f7f6f2] pt-[100px] text-black">
+    <div class="house-container grid min-h-[calc(100vh-100px)] lg:grid-cols-2">
+        <div class="flex items-center border-b border-black/10 py-12 lg:border-r lg:border-b-0 lg:pr-14">
+            <div class="max-w-xl">
+                <p class="ui-label text-black/35">Join the House</p>
+                <h1 class="mt-4 display-serif text-[52px] leading-[.94] sm:text-[66px]">Your private account.</h1>
+                <p class="mt-6 max-w-md text-sm leading-7 text-black/50">Save your delivery details, keep your order history together and move through checkout with less friction.</p>
+            </div>
+        </div>
+
+        <div class="flex items-center py-12 lg:pl-14">
+            <form method="POST" action="{{ route('customer.register.store') }}" class="w-full max-w-xl bg-white p-7 sm:p-10">
+                @csrf
+                <p class="ui-label text-black/35">Create Account</p>
+                <h2 class="mt-3 display-serif text-[42px]">Join Scents by Aamir.</h2>
+
+                @if($errors->any())<div class="mt-5 border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ $errors->first() }}</div>@endif
+
+                <div class="mt-7 grid gap-4 sm:grid-cols-2">
+                    <label><span class="ui-label text-black/35">First name</span><input name="first_name" value="{{ old('first_name') }}" required class="mt-2 min-h-[54px] w-full border border-black/15 px-4"></label>
+                    <label><span class="ui-label text-black/35">Last name</span><input name="last_name" value="{{ old('last_name') }}" class="mt-2 min-h-[54px] w-full border border-black/15 px-4"></label>
+                    <label class="sm:col-span-2"><span class="ui-label text-black/35">Email</span><input name="email" type="email" value="{{ old('email') }}" required autocomplete="email" class="mt-2 min-h-[54px] w-full border border-black/15 px-4"></label>
+                    <label class="sm:col-span-2"><span class="ui-label text-black/35">Phone</span><input name="phone" value="{{ old('phone') }}" autocomplete="tel" class="mt-2 min-h-[54px] w-full border border-black/15 px-4"></label>
+                    <label><span class="ui-label text-black/35">Password</span><input name="password" type="password" required autocomplete="new-password" class="mt-2 min-h-[54px] w-full border border-black/15 px-4"></label>
+                    <label><span class="ui-label text-black/35">Confirm password</span><input name="password_confirmation" type="password" required autocomplete="new-password" class="mt-2 min-h-[54px] w-full border border-black/15 px-4"></label>
+                    <button class="btn-solid sm:col-span-2">Create account</button>
+                </div>
+
+                <p class="mt-6 border-t border-black/10 pt-6 text-sm text-black/50">Already registered? <a class="text-link" href="{{ route('customer.login') }}">Sign in</a></p>
+            </form>
+        </div>
+    </div>
+</section>
 @endsection
