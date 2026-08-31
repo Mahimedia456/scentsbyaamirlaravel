@@ -303,11 +303,13 @@ class StorefrontCatalogService
     {
         $primary = $product->images->firstWhere('is_primary', true) ?: $product->images->first();
         $secondary = $product->images->first(fn ($image) => !$primary || $image->id !== $primary->id);
-        $variant = $product->variants->first(fn ($item) => (int) ($item->stock ?? 0) > 0) ?: $product->variants->first();
+        $variant = $product->variants->first(fn ($item) => max((int) ($item->stock ?? 0), (int) ($item->stock_quantity ?? 0)) > 0) ?: $product->variants->first();
         $visual = config("storefront.products.{$product->slug}", []);
 
         $price = $variant?->price ?? $product->base_price ?? 0;
-        $stock = $product->variants->isNotEmpty() ? $product->variants->sum('stock') : (int) $product->stock;
+        $stock = $product->variants->isNotEmpty()
+            ? (int) $product->variants->sum(fn ($v) => max((int) ($v->stock ?? 0), (int) ($v->stock_quantity ?? 0)))
+            : max((int) ($product->stock ?? 0), (int) ($product->stock_quantity ?? 0));
 
         return [
             'id' => $product->id,
@@ -352,7 +354,7 @@ class StorefrontCatalogService
                     $size = isset($matches[1]) ? (float) $matches[1] : 9999;
 
                     return [
-                        (int) $v->stock > 0 ? 0 : 1,
+                        max((int) ($v->stock ?? 0), (int) ($v->stock_quantity ?? 0)) > 0 ? 0 : 1,
                         $size,
                         (int) ($v->sort_order ?? 0),
                     ];
@@ -364,8 +366,8 @@ class StorefrontCatalogService
                     'sku' => $v->sku,
                     'price' => number_format((float) $v->price, 0),
                     'price_value' => (float) $v->price,
-                    'stock' => (int) $v->stock,
-                    'in_stock' => (int) $v->stock > 0,
+                    'stock' => max((int) ($v->stock ?? 0), (int) ($v->stock_quantity ?? 0)),
+                    'in_stock' => max((int) ($v->stock ?? 0), (int) ($v->stock_quantity ?? 0)) > 0,
                 ])->values()->all(),
         ];
     }

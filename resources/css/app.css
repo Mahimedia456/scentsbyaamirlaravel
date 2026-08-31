@@ -684,3 +684,64 @@ input[type="search"]::-webkit-search-cancel-button {
 /* 2026-08 Phase 10–12 — Cart / Checkout / Account */
 [x-cloak] { display: none !important; }
 .sba-commerce-panel { contain: layout paint; }
+
+
+/* Phase 17 final — viewport-fit desktop mega menu */
+.sba-mega-primary {
+  min-height: 56px;
+  padding-block: 7px;
+}
+.sba-mega-primary .display-serif {
+  font-size: clamp(2rem, 2.45vw, 2.75rem);
+  line-height: .92;
+}
+.sba-mega-secondary {
+  gap: clamp(.85rem, 2vh, 1.45rem);
+}
+.sba-mega-group {
+  padding-bottom: clamp(.65rem, 1.6vh, 1.15rem);
+  border-bottom: 1px solid rgb(0 0 0 / .08);
+}
+.sba-mega-link-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  column-gap: 1.15rem;
+  row-gap: .52rem;
+  margin-top: .7rem;
+  font-size: 10px;
+  line-height: 1.35;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgb(0 0 0 / .62);
+}
+@media (max-height: 780px) and (min-width: 1024px) {
+  .sba-mega-primary {
+    min-height: 48px;
+    padding-block: 4px;
+  }
+  .sba-mega-primary .display-serif {
+    font-size: clamp(1.8rem, 2.15vw, 2.25rem);
+  }
+  .sba-mega-secondary {
+    gap: .65rem;
+  }
+  .sba-mega-group {
+    padding-bottom: .55rem;
+  }
+  .sba-mega-link-grid {
+    row-gap: .36rem;
+    margin-top: .48rem;
+    font-size: 9px;
+  }
+}
+@media (max-height: 680px) and (min-width: 1024px) {
+  .sba-mega-primary {
+    min-height: 42px;
+  }
+  .sba-mega-primary .display-serif {
+    font-size: 1.75rem;
+  }
+  .sba-mega-secondary {
+    gap: .45rem;
+  }
+}

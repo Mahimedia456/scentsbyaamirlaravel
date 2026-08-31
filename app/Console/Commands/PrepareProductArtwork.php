@@ -50,7 +50,13 @@ class PrepareProductArtwork extends Command
             $description = trim(strip_tags((string) $product->description));
             $story = trim(strip_tags((string) $product->story));
 
-            $referenceInstruction = "Upload the exact Scents by Aamir bottle/product reference for {$product->name}. Preserve the exact bottle silhouette, cap, glass, label, logo, printed product name, proportions and liquid colour. Do not copy the inspired-by brand's bottle, logo or packaging.";
+            $isTester = str_contains(strtolower($product->name.' '.$description), 'tester')
+                || str_contains(strtolower($product->name.' '.$description), 'sample')
+                || str_contains(strtolower($product->name.' '.$description), 'discovery box');
+
+            $referenceInstruction = $isTester
+                ? "Upload the exact Scents by Aamir tester/discovery-box reference for {$product->name}. Preserve the exact box, vial layout, label, logo and proportions. Do not invent or copy competitor packaging."
+                : "Upload the exact Scents by Aamir bottle reference for {$product->name}. Preserve the exact bottle silhouette, cap, glass, label, logo, printed product name, proportions and liquid colour. Do not copy the inspired-by brand's bottle, logo or packaging.";
 
             $prompt = <<<MD
 # {$product->name}
@@ -80,7 +86,7 @@ class PrepareProductArtwork extends Command
 **Save path:**  
 `public/images/products/{$slug}/hero.webp`
 
-**Bottle reference:** YES
+**Bottle / product reference:** YES
 
 {$referenceInstruction}
 

@@ -12,30 +12,25 @@
 @endphp
 
 <div
-    x-data="{
-        active: 'fragrances',
-        open: false,
-        images: @js($menuImages),
-        setActive(key) { this.active = key; }
-    }"
-    x-effect="open = !!$store.site?.megaOpen"
+    x-data="{ active:'fragrances', images:@js($menuImages) }"
     x-cloak
-    x-show="open"
+    x-show="$store.site.megaOpen"
+    x-effect="window.dispatchEvent(new CustomEvent('house:scroll-lock', { detail: { locked: !!$store.site.megaOpen, source: 'desktop-mega' } }))"
     @keydown.escape.window="$store.site.megaOpen=false"
-    class="fixed inset-x-0 z-[80] top-[100px] lg:top-[106px]"
+    class="fixed inset-x-0 bottom-0 top-[108px] z-[90] hidden lg:block"
 >
-    <div class="absolute inset-0 bg-black/35 backdrop-blur-[2px]" @click="$store.site.megaOpen=false"></div>
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]" @click="$store.site.megaOpen=false"></div>
 
-    <section class="relative mx-auto max-w-[100vw] overflow-hidden border-y border-black/10 bg-[#f4f1ea] text-black shadow-2xl"
-        style="height: min(730px, calc(100dvh - 106px)); min-height: 520px;">
-        <div class="grid h-full grid-cols-1 lg:grid-cols-[1.06fr_.94fr]">
-            <div class="flex h-full min-h-0 flex-col px-6 py-6 sm:px-8 lg:px-10 lg:py-7 xl:px-14">
-                <div class="flex items-center justify-between border-b border-black/10 pb-4">
+    <section class="sba-mega-panel relative h-full overflow-hidden border-t border-black/10 bg-[#f4f1ea] text-black shadow-2xl">
+        <div class="grid h-full min-h-0 grid-cols-[1.04fr_.96fr]">
+            {{-- Navigation --}}
+            <div class="grid min-h-0 grid-rows-[auto_1fr] px-8 py-5 xl:px-12">
+                <div class="flex items-center justify-between border-b border-black/10 pb-3">
                     <p class="ui-label text-black/35">Explore the House</p>
-                    <button type="button" @click="$store.site.megaOpen=false" class="ui-label text-black/45 hover:text-black">Close</button>
+                    <button type="button" @click="$store.site.megaOpen=false" class="ui-label min-h-[36px] px-2 text-black/45 hover:text-black">Close</button>
                 </div>
 
-                <div class="grid min-h-0 flex-1 grid-cols-1 gap-5 pt-5 lg:grid-cols-[1.05fr_.95fr] xl:gap-8">
+                <div class="grid min-h-0 grid-cols-[1.03fr_.97fr] gap-7 pt-4 xl:gap-10">
                     <nav class="min-h-0">
                         @foreach([
                             ['fragrances','Fragrances',route('shop')],
@@ -46,54 +41,50 @@
                         ] as [$key,$label,$href])
                             <a
                                 href="{{ $href }}"
-                                @mouseenter="setActive('{{ $key }}')"
-                                @focus="setActive('{{ $key }}')"
+                                @mouseenter="active='{{ $key }}'"
+                                @focus="active='{{ $key }}'"
                                 @click="$store.site.megaOpen=false"
-                                class="group flex items-center justify-between border-b border-black/10 py-2.5 sm:py-3"
+                                class="sba-mega-primary group flex items-center justify-between border-b border-black/10"
                             >
-                                <span class="display-serif text-[34px] leading-[.94] sm:text-[40px] lg:text-[42px] xl:text-[46px]">{{ $label }}</span>
-                                <span class="translate-x-0 text-lg transition group-hover:translate-x-1">→</span>
+                                <span class="display-serif">{{ $label }}</span>
+                                <span class="text-base transition group-hover:translate-x-1">→</span>
                             </a>
                         @endforeach
                     </nav>
 
-                    <div class="grid content-start gap-5 lg:gap-6">
-                        <div>
+                    <div class="sba-mega-secondary grid content-start">
+                        <div class="sba-mega-group">
                             <p class="ui-label text-black/30">By Mood</p>
-                            <div class="mt-3 grid grid-cols-2 gap-x-5 gap-y-2 text-[11px] uppercase tracking-[.12em] text-black/62">
-                                <a href="{{ route('shop',['mood'=>'quiet']) }}" @click="$store.site.megaOpen=false">Quiet</a>
-                                <a href="{{ route('shop',['mood'=>'bold']) }}" @click="$store.site.megaOpen=false">Bold</a>
-                                <a href="{{ route('shop',['mood'=>'fresh']) }}" @click="$store.site.megaOpen=false">Fresh</a>
-                                <a href="{{ route('shop',['mood'=>'warm']) }}" @click="$store.site.megaOpen=false">Warm</a>
+                            <div class="sba-mega-link-grid">
+                                <a href="{{ route('finder') }}" @click="$store.site.megaOpen=false">Quiet</a>
+                                <a href="{{ route('finder') }}" @click="$store.site.megaOpen=false">Magnetic</a>
+                                <a href="{{ route('finder') }}" @click="$store.site.megaOpen=false">Fresh</a>
+                                <a href="{{ route('finder') }}" @click="$store.site.megaOpen=false">Dark</a>
                             </div>
                         </div>
 
-                        <div>
+                        <div class="sba-mega-group">
                             <p class="ui-label text-black/30">By Material</p>
-                            <div class="mt-3 grid grid-cols-2 gap-x-5 gap-y-2 text-[11px] uppercase tracking-[.12em] text-black/62">
+                            <div class="sba-mega-link-grid">
                                 @foreach([
-                                    ['oud','Oud','oud'],
-                                    ['rose','Rose','rose'],
-                                    ['amber','Amber','amber'],
-                                    ['citrus','Citrus','citrus'],
-                                    ['sandalwood','Sandalwood','sandalwood'],
-                                    ['jasmine','Jasmine','jasmine'],
+                                    ['oud','Oud','oud'],['rose','Rose','rose'],['amber','Amber','amber'],
+                                    ['citrus','Citrus','citrus'],['sandalwood','Sandalwood','sandalwood'],['jasmine','Jasmine','jasmine']
                                 ] as [$key,$label,$slug])
                                     <a
                                         href="{{ route('ingredients.show',$slug) }}"
-                                        @mouseenter="setActive('{{ $key === 'oud' ? 'oud' : 'ingredients' }}')"
-                                        @focus="setActive('{{ $key === 'oud' ? 'oud' : 'ingredients' }}')"
+                                        @mouseenter="active='{{ $key === 'oud' ? 'oud' : 'ingredients' }}'"
+                                        @focus="active='{{ $key === 'oud' ? 'oud' : 'ingredients' }}'"
                                         @click="$store.site.megaOpen=false"
                                     >{{ $label }}</a>
                                 @endforeach
                             </div>
                         </div>
 
-                        <div>
+                        <div class="sba-mega-group">
                             <p class="ui-label text-black/30">Services</p>
-                            <div class="mt-3 grid grid-cols-2 gap-x-5 gap-y-2 text-[11px] uppercase tracking-[.12em] text-black/62">
+                            <div class="sba-mega-link-grid">
                                 <a href="{{ route('gifting') }}" @click="$store.site.megaOpen=false">Gifting</a>
-                                <a href="{{ route('customer.login') }}" @click="$store.site.megaOpen=false">Account</a>
+                                <a href="{{ route('account') }}" @click="$store.site.megaOpen=false">Account</a>
                                 <a href="{{ route('wishlist') }}" @click="$store.site.megaOpen=false">Wishlist</a>
                                 <a href="{{ route('contact') }}" @click="$store.site.megaOpen=false">Support</a>
                             </div>
@@ -102,38 +93,33 @@
                 </div>
             </div>
 
-            <div class="hidden h-full min-h-0 gap-3 bg-black p-3 lg:grid lg:grid-cols-[1.15fr_.85fr]">
+            {{-- Existing Phase imagery only --}}
+            <div class="grid min-h-0 grid-cols-[1.14fr_.86fr] gap-2 bg-black p-2">
                 <a
                     :href="active === 'collections' ? @js(route('collections')) : active === 'finder' ? @js(route('finder')) : active === 'ingredients' || active === 'oud' ? @js(route('ingredients')) : active === 'journal' ? @js(route('journal')) : @js(route('shop'))"
                     @click="$store.site.megaOpen=false"
-                    class="relative min-h-0 overflow-hidden bg-[#ddd8cf]"
+                    class="relative min-h-0 overflow-hidden bg-[#d8d3ca]"
                 >
                     <template x-for="(src,key) in images" :key="key">
-                        <img
-                            x-show="active === key"
-                            :src="src"
-                            alt=""
-                            class="absolute inset-0 h-full w-full object-cover"
-                            x-transition.opacity
-                        >
+                        <img x-show="active===key" :src="src" alt="" class="absolute inset-0 h-full w-full object-cover" x-transition.opacity>
                     </template>
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/58 via-black/5 to-transparent"></div>
-                    <div class="absolute inset-x-0 bottom-0 p-6 text-white">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/62 via-black/5 to-transparent"></div>
+                    <div class="absolute inset-x-0 bottom-0 p-5 text-white">
                         <p class="ui-label text-white/45">House Edit</p>
-                        <h3 class="mt-3 display-serif text-[38px] leading-[.95]"
-                            x-text="active === 'finder' ? 'Begin with a feeling.' : active === 'collections' ? 'Curated fragrance worlds.' : active === 'journal' ? 'Read the house.' : active === 'ingredients' || active === 'oud' ? 'Explore the materials.' : 'Enter the fragrance wardrobe.'"></h3>
+                        <h3
+                            class="mt-2 max-w-[420px] display-serif text-[34px] leading-[.96] xl:text-[40px]"
+                            x-text="active==='finder' ? 'Begin with a feeling.' : active==='collections' ? 'Curated fragrance worlds.' : active==='journal' ? 'Read the house.' : active==='ingredients' || active==='oud' ? 'Explore the materials.' : 'Enter the fragrance wardrobe.'"
+                        ></h3>
                     </div>
                 </a>
 
                 <a href="{{ route('finder') }}" @click="$store.site.megaOpen=false" class="relative min-h-0 overflow-hidden bg-[#111] text-white">
-                    <img src="{{ asset('images/discovery/finder-hero.webp') }}" alt="" class="absolute inset-0 h-full w-full object-cover opacity-45">
-                    <div class="absolute inset-0 bg-black/42"></div>
-                    <div class="absolute inset-x-0 top-0 p-6">
-                        <p class="ui-label text-white/45">Fragrance Finder</p>
-                    </div>
-                    <div class="absolute inset-x-0 bottom-0 p-6">
-                        <h3 class="display-serif text-[38px] leading-[.98] xl:text-[44px]">Start with how you want to feel.</h3>
-                        <span class="mt-5 inline-block text-lg">→</span>
+                    <img src="{{ asset('images/discovery/finder-hero.webp') }}" alt="" class="absolute inset-0 h-full w-full object-cover opacity-42">
+                    <div class="absolute inset-0 bg-black/48"></div>
+                    <div class="absolute inset-x-0 top-0 p-5"><p class="ui-label text-white/45">Fragrance Finder</p></div>
+                    <div class="absolute inset-x-0 bottom-0 p-5">
+                        <h3 class="display-serif text-[34px] leading-[.97] xl:text-[40px]">Start with how you want to feel.</h3>
+                        <span class="mt-4 inline-block">→</span>
                     </div>
                 </a>
             </div>

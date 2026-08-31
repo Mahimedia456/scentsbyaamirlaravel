@@ -52,11 +52,12 @@ class StorefrontCommerceService
             }
 
             $primary = $product->images->firstWhere('is_primary', true) ?: $product->images->first();
-            $variant = $product->variants->firstWhere('is_active', true);
+            $variant = $product->variants->first(fn ($v) => $v->is_active && $this->variantStock($v) > 0)
+                ?: $product->variants->firstWhere('is_active', true);
             $price = (float) ($variant?->price ?? $product->base_price ?? 0);
             $stock = $product->variants->where('is_active', true)->isNotEmpty()
-                ? (int) $product->variants->where('is_active', true)->sum('stock')
-                : (int) $product->stock;
+                ? (int) $product->variants->where('is_active', true)->sum(fn ($v) => $this->variantStock($v))
+                : $this->productStock($product);
 
             return [
                 'product_id' => $product->id,
@@ -109,10 +110,11 @@ class StorefrontCommerceService
         }
 
         if (!$variant && $product->variants->isNotEmpty()) {
-            $variant = $product->variants->first();
+            $variant = $product->variants->first(fn ($v) => $this->variantStock($v) > 0)
+                ?: $product->variants->first();
         }
 
-        $stock = $variant ? (int) $variant->stock : (int) $product->stock;
+        $stock = $variant ? $this->variantStock($variant) : $this->productStock($product);
         $requestedQty = max(1, (int) ($line['qty'] ?? 1));
         $qty = min($requestedQty, max(0, $stock));
         $price = (float) ($variant?->price ?? $product->base_price ?? 0);
@@ -168,6 +170,22 @@ class StorefrontCommerceService
     private function fallbackKey(array $line): string
     {
         return 'fallback:' . ($line['slug'] ?? 'product') . ':' . strtolower((string) ($line['size'] ?? 'default'));
+    }
+
+    private function variantStock(ProductVariant $variant): int
+    {
+        return max(
+            (int) ($variant->stock ?? 0),
+            (int) ($variant->stock_quantity ?? 0)
+        );
+    }
+
+    private function productStock(Product $product): int
+    {
+        return max(
+            (int) ($product->stock ?? 0),
+            (int) ($product->stock_quantity ?? 0)
+        );
     }
 
     private function toFloat(mixed $value): float

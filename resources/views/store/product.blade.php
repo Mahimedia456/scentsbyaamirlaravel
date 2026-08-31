@@ -21,9 +21,6 @@
     if ($gallery->isEmpty() && $image) {
         $gallery->push($image);
     }
-    if ($worldImage && !$gallery->contains($worldImage)) {
-        $gallery->push($worldImage);
-    }
 
     /*
     |--------------------------------------------------------------------------
@@ -76,24 +73,12 @@
     };
 
     $worldBackgroundPath = "images/product-worlds/{$worldKey}.webp";
-    $worldBackground = $productWorld ?: (file_exists(public_path($worldBackgroundPath))
-        ? asset($worldBackgroundPath)
-        : (
-            $worldKey === 'fresh'
-                ? (config('storefront.campaigns.finder.image') ?? $worldImage)
-                : (
-                    in_array($worldKey, ['oud', 'dark', 'amber', 'spicy'], true)
-                        ? (config('storefront.campaigns.nocturnal.image') ?? $worldImage)
-                        : (config('storefront.campaigns.signature.image') ?? $worldImage)
-                )
-        ));
 
+    // Final product PDP does not show reusable/dummy worlds.
+    // Only exact product-specific artwork is rendered when it exists.
+    $worldBackground = $productWorld;
     $ritualBackgroundPath = "images/product-worlds/ritual.webp";
-    $ritualBackground = $productStoryImage ?: (
-        file_exists(public_path($ritualBackgroundPath))
-            ? asset($ritualBackgroundPath)
-            : $worldBackground
-    );
+    $ritualBackground = $productStoryImage;
 
     $theme = $visual['theme'] ?? [];
     $world = $visual['world'] ?? [];
@@ -187,7 +172,9 @@
     };
 
     $occasion = $world['occasion'] ?? 'Day into evening';
-    $notesEditorialImage = $productNotesImage ?: $worldBackground;
+    $notesEditorialImage = $productNotesImage;
+    $desktopHeroMedia = $gallery->first();
+    $desktopSupportMedia = $gallery->slice(1, 2)->values();
 @endphp
 
 @section('title', $name.' — Scents by Aamir')
@@ -306,30 +293,49 @@
                     @endif
                 </div>
 
-                <div class="hidden gap-px bg-black/10 lg:grid lg:grid-cols-[1.12fr_.88fr]">
-                    @forelse($gallery->take(4) as $index => $media)
-                        <figure class="group relative min-h-[620px] overflow-hidden bg-[#efeee9] xl:min-h-[720px]">
+                <div class="hidden min-h-[720px] gap-px bg-black/10 lg:grid {{ $desktopSupportMedia->isNotEmpty() ? 'lg:grid-cols-[1.32fr_.68fr]' : 'lg:grid-cols-1' }}">
+                    @if($desktopHeroMedia)
+                        <figure class="group relative min-h-[720px] overflow-hidden bg-[#efeee9]">
                             <img
-                                src="{{ $media }}"
-                                alt="{{ $name }} image {{ $index + 1 }}"
-                                class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.012]"
-                                @if($index === 0) fetchpriority="high" @else loading="lazy" @endif
+                                src="{{ $desktopHeroMedia }}"
+                                alt="{{ $name }} hero"
+                                class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.008]"
+                                fetchpriority="high"
                             >
-                            @if($badge && $index === 0)
+                            @if($badge)
                                 <span class="absolute left-5 top-5 border border-black/10 bg-white/90 px-3 py-2 text-[8px] uppercase tracking-[.18em] backdrop-blur">
                                     {{ $badge }}
                                 </span>
                             @endif
-                            <span class="absolute bottom-5 left-5 text-[8px] uppercase tracking-[.18em] {{ $index === 0 ? 'text-black/35' : 'text-white/65' }}">
-                                {{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }} / Gallery
+                            <span class="absolute bottom-5 left-5 bg-black/45 px-3 py-2 text-[8px] uppercase tracking-[.18em] text-white/75 backdrop-blur">
+                                01 / Product
                             </span>
                         </figure>
-                    @empty
-                        <div class="col-span-2 flex min-h-[650px] items-center justify-center bg-[#efeee9]">
+                    @else
+                        <div class="flex min-h-[720px] items-center justify-center bg-[#efeee9]">
                             <p class="display-serif text-4xl text-black/25">Product imagery coming soon.</p>
                         </div>
-                    @endforelse
+                    @endif
+
+                    @if($desktopSupportMedia->isNotEmpty())
+                        <div class="grid min-h-0 grid-rows-2 gap-px bg-black/10">
+                            @foreach($desktopSupportMedia as $index => $media)
+                                <figure class="group relative min-h-0 overflow-hidden bg-[#efeee9]">
+                                    <img
+                                        src="{{ $media }}"
+                                        alt="{{ $name }} detail {{ $index + 2 }}"
+                                        class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.012]"
+                                        loading="lazy"
+                                    >
+                                    <span class="absolute bottom-4 left-4 bg-black/45 px-3 py-2 text-[8px] uppercase tracking-[.18em] text-white/70 backdrop-blur">
+                                        {{ str_pad($index + 2, 2, '0', STR_PAD_LEFT) }} / Detail
+                                    </span>
+                                </figure>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
+
             </div>
 
             {{-- PURCHASE PANEL --}}
@@ -445,10 +451,11 @@
                                 image:@js($image),
                                 size:size,
                                 stock:maxQty(),
+                                available:maxQty() > 0,
                                 qty:qty
                             })"
                             class="min-h-[58px] bg-black px-5 text-[9px] font-medium uppercase tracking-[.18em] text-white transition hover:bg-[#292929] disabled:cursor-not-allowed disabled:bg-black/35"
-                            @disabled(!$inStock)
+                            :disabled="maxQty() <= 0"
                         >
                             <span x-show="maxQty() > 0">
                                 Add to bag · PKR <span x-text="currentPrice().toLocaleString()"></span>
