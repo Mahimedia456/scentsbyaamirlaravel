@@ -1,0 +1,4 @@
+<?php
+namespace App\Http\Controllers\Admin;
+use App\Http\Controllers\Controller; use App\Models\MediaAsset; use Illuminate\Http\Request; use Illuminate\Support\Facades\Storage;
+class MediaController extends Controller { public function index(){return view('admin.media.index',['assets'=>MediaAsset::latest()->paginate(30)]);} public function store(Request $r){$d=$r->validate(['file'=>'required|file|max:20480','alt_text'=>'nullable|string|max:255']);$f=$r->file('file');$path=$f->store('media/'.now()->format('Y/m'),'public');MediaAsset::create(['name'=>$f->getClientOriginalName(),'path'=>$path,'mime_type'=>$f->getMimeType(),'size_bytes'=>$f->getSize(),'alt_text'=>$d['alt_text']??null,'uploaded_by'=>auth()->id()]);return back()->with('success','Media uploaded.');} public function destroy(MediaAsset $media){Storage::disk($media->disk)->delete($media->path);$media->delete();return back()->with('success','Media deleted.');} }

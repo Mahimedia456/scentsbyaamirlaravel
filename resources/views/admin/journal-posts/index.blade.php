@@ -1,0 +1,5 @@
+@extends('admin.layouts.app')
+@section('title','Journal') @section('header','Journal')
+@section('content')
+<div class="mb-6 flex justify-between"><form class="flex max-w-xl flex-1 gap-2"><input name="q" value="{{ request('q') }}" placeholder="Search journal" class="min-w-0 flex-1 border border-black/15 bg-white px-4 py-3"><button class="bg-black px-4 text-xs uppercase tracking-[.14em] text-white">Search</button></form><a href="{{ route('admin.journal-posts.create') }}" class="ml-4 bg-black px-5 py-3 text-xs uppercase tracking-[.16em] text-white">New post</a></div><div class="border border-black/10 bg-white">@foreach($posts as $post)<div class="flex items-center justify-between border-b border-black/10 p-5"><div><a href="{{ route('admin.journal-posts.edit',$post) }}" class="font-medium underline">{{ $post->title }}</a><p class="mt-1 text-xs text-black/45">{{ $post->eyebrow }} · {{ ucfirst($post->status) }}</p></div><span class="text-xs">{{ optional($post->published_at)->format('d M Y') }}</span></div>@endforeach</div><div class="mt-6">{{ $posts->links() }}</div>
+@endsection

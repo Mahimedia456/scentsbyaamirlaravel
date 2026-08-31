@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title','Admin') — Scents by Aamir</title>@vite(['resources/css/app.css','resources/js/app.js'])
+</head>
+<body class="bg-[#f4f3ef] text-[#111] antialiased">
+<x-house.page-loader />
+<div class="min-h-screen lg:flex">
+<aside class="hidden w-[280px] shrink-0 bg-black text-white lg:flex lg:flex-col"><div class="border-b border-white/10 px-7 py-7"><a href="{{ route('admin.dashboard') }}"><img src="{{ asset('logo.png') }}" alt="Scents by Aamir" class="h-9 w-auto brightness-0 invert"></a><p class="mt-4 text-[10px] uppercase tracking-[.26em] text-white/45">Administration</p></div>
+@php($nav=[
+['Dashboard','admin.dashboard'],['Products','admin.products.index'],['Categories','admin.categories.index'],['Collections','admin.collections.index'],
+['Orders','admin.orders.index'],['Customers','admin.customers.index'],['Inventory','admin.inventory.index'],['Promotions','admin.coupons.index'],
+['Pages','admin.pages.index'],['Journal','admin.journal-posts.index'],['Navigation','admin.navigations.index'],
+['Media','admin.media.index'],['SEO','admin.seo.index'],['Support','admin.contact-inquiries.index'],['Newsletter','admin.newsletter.index'],['Store Settings','admin.settings.index'],['Shipping','admin.shipping.index'],['Payments','admin.payments.index'],['Analytics','admin.analytics.index'],['Admin Users','admin.admin-users.index'],['Audit Log','admin.audit.index'],['Woo Import','admin.woocommerce.index']])
+<nav class="flex-1 space-y-1 overflow-y-auto px-4 py-5 text-sm">@foreach($nav as [$label,$route])<a href="{{ route($route) }}" class="flex items-center gap-3 px-4 py-2.5 {{ request()->routeIs(str_replace('.index','.*',$route)) || request()->routeIs($route) ? 'bg-white text-black' : 'text-white/65 hover:bg-white/10 hover:text-white' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs(str_replace('.index','.*',$route)) || request()->routeIs($route) ? 'bg-black' : 'bg-white/25' }}"></span>{{ $label }}</a>@endforeach</nav>
+<div class="border-t border-white/10 p-5"><div class="mb-4 px-2"><p class="text-xs font-medium">{{ auth()->user()->name }}</p><p class="mt-1 truncate text-[11px] text-white/45">{{ auth()->user()->email }}</p></div><form method="POST" action="{{ route('admin.logout') }}">@csrf<button class="w-full border border-white/20 px-4 py-2.5 text-left text-xs uppercase tracking-[.16em] hover:bg-white hover:text-black">Sign out</button></form></div></aside>
+<main class="min-w-0 flex-1"><header class="flex min-h-20 items-center justify-between border-b border-black/10 bg-[#f4f3ef] px-5 md:px-8 xl:px-12"><div><p class="text-[10px] uppercase tracking-[.22em] text-black/45">Scents by Aamir</p><h1 class="mt-1 text-lg font-medium">@yield('header','Dashboard')</h1></div><div class="flex items-center gap-3"><a href="{{ route('home') }}" target="_blank" class="border border-black/15 px-4 py-2 text-[10px] uppercase tracking-[.17em] hover:bg-black hover:text-white">View storefront</a><form method="POST" action="{{ route('admin.logout') }}" class="lg:hidden">@csrf<button class="text-xs underline">Logout</button></form></div></header><div class="p-5 md:p-8 xl:p-12">@if(session('success'))<div class="mb-6 border border-emerald-300 bg-emerald-50 p-4 text-sm">{{ session('success') }}</div>@endif @if(session('error'))<div class="mb-6 border border-red-300 bg-red-50 p-4 text-sm">{{ session('error') }}</div>@endif @if($errors->any())<div class="mb-6 border border-red-300 bg-red-50 p-4 text-sm"><ul class="list-disc space-y-1 pl-5">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif @yield('content')</div></main>
+</div></body></html>

@@ -1,0 +1,3 @@
+<?php
+namespace App\Http\Controllers\Admin; use App\Http\Controllers\Controller; use App\Models\SeoRedirect; use Illuminate\Http\Request;
+class SeoController extends Controller { public function index(){return view('admin.seo.index',['redirects'=>SeoRedirect::latest()->paginate(30)]);} public function store(Request $r){$d=$r->validate(['from_path'=>'required|string|max:255|unique:seo_redirects,from_path','to_path'=>'required|string|max:255','status_code'=>'required|in:301,302']);$d['active']=$r->boolean('active');SeoRedirect::create($d);return back()->with('success','Redirect created.');} public function destroy(SeoRedirect $redirect){$redirect->delete();return back()->with('success','Redirect removed.');} }

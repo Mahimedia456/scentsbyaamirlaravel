@@ -1,0 +1,60 @@
+name: Deploy Scents by Aamir
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: scents-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to StackCP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.STACKCP_SSH_KEY }}
+          SSH_HOST: ${{ secrets.STACKCP_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy Laravel
+        env:
+          SSH_HOST: ${{ secrets.STACKCP_HOST }}
+          SSH_USER: ${{ secrets.STACKCP_USER }}
+          APP_PATH: ${{ secrets.STACKCP_APP_PATH }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "
+            set -e
+            cd '$APP_PATH'
+
+            echo '=== Updating source ==='
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo '=== Installing dependencies ==='
+            /usr/php84/usr/bin/php /usr/local/bin/composer install \
+              --no-dev \
+              --no-interaction \
+              --prefer-dist \
+              --optimize-autoloader
+
+            echo '=== Clearing Laravel cache ==='
+            /usr/php84/usr/bin/php artisan optimize:clear
+
+            echo '=== Running database migrations ==='
+            /usr/php84/usr/bin/php artisan migrate --force
+
+            echo '=== Building production caches ==='
+            /usr/php84/usr/bin/php artisan route:cache
+            /usr/php84/usr/bin/php artisan view:cache
+
+            echo '=== Deployment successful ==='
+          "

@@ -1,0 +1,3 @@
+<?php
+namespace App\Http\Controllers\Admin; use App\Http\Controllers\Controller; use App\Models\ShippingZone; use Illuminate\Http\Request;
+class ShippingController extends Controller { public function index(){return view('admin.shipping.index',['zones'=>ShippingZone::latest()->get()]);} public function store(Request $r){$d=$r->validate(['name'=>'required|string|max:120','country_code'=>'required|string|size:2','regions'=>'nullable|string','base_rate'=>'required|numeric|min:0','free_shipping_over'=>'nullable|numeric|min:0']);$d['active']=$r->boolean('active');ShippingZone::create($d);return back()->with('success','Shipping zone added.');} public function destroy(ShippingZone $zone){$zone->delete();return back();} }

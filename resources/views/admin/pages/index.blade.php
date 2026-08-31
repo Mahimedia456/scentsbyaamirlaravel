@@ -1,0 +1,5 @@
+@extends('admin.layouts.app')
+@section('title','Pages') @section('header','Content Pages')
+@section('content')
+<div class="mb-6 flex justify-between"><form class="flex max-w-xl flex-1 gap-2"><input name="q" value="{{ request('q') }}" placeholder="Search pages" class="min-w-0 flex-1 border border-black/15 bg-white px-4 py-3"><button class="bg-black px-4 text-xs uppercase tracking-[.14em] text-white">Search</button></form><a href="{{ route('admin.pages.create') }}" class="ml-4 bg-black px-5 py-3 text-xs uppercase tracking-[.16em] text-white">New page</a></div><div class="border border-black/10 bg-white">@foreach($pages as $page)<div class="flex items-center justify-between border-b border-black/10 p-5"><div><a href="{{ route('admin.pages.edit',$page) }}" class="font-medium underline">{{ $page->title }}</a><p class="mt-1 text-xs text-black/45">/{{ $page->slug }} · {{ ucfirst($page->status) }}</p></div><span class="text-xs">{{ optional($page->published_at)->format('d M Y') }}</span></div>@endforeach</div><div class="mt-6">{{ $pages->links() }}</div>
+@endsection

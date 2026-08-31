@@ -1,0 +1,13 @@
+@extends('admin.layouts.app')
+@section('title','WooCommerce Import') @section('header','WooCommerce Migration Center')
+@section('content')
+@if(!empty($setupRequired))<div class="mb-6 border border-amber-300 bg-amber-50 p-5 text-sm"><b>Module setup required.</b> Run <code class="rounded bg-white px-1 py-0.5">php artisan migrate</code>, then refresh.</div>@endif
+<div class="mb-8 border border-amber-300 bg-amber-50 p-5 text-sm"><b>One-time migration only.</b> Back up both stores first. Re-running is update-safe: Laravel records are matched by stable slugs/emails/order numbers and source mappings. Imported media is copied to Laravel public storage so WordPress does not remain a runtime dependency.</div>
+<form method="POST" action="{{ route('admin.woocommerce.store') }}" class="space-y-4 border bg-white p-6">@csrf
+<input name="source_url" value="{{ old('source_url') }}" placeholder="https://oldstore.com" class="w-full border p-3" required>
+<div class="grid gap-3 md:grid-cols-2"><input name="consumer_key" placeholder="Consumer key" class="border p-3" required><input name="consumer_secret" type="password" placeholder="Consumer secret" class="border p-3" required></div>
+<div class="flex flex-wrap gap-5 text-sm">@foreach(['products','categories','customers','orders','media'] as $x)<label><input type="checkbox" name="{{ $x }}" value="1" checked> {{ ucfirst($x) }}</label>@endforeach</div>
+<div class="flex flex-wrap gap-3"><button formaction="{{ route('admin.woocommerce.test') }}" class="border border-black px-5 py-3">Test connection</button><button name="run_now" value="1" class="bg-black px-5 py-3 text-white">Run import now</button><button class="border border-black px-5 py-3">Create CLI import run</button></div>
+<p class="text-xs text-neutral-500">For a large live store, create a CLI run and execute <code>php artisan woocommerce:import RUN_ID --key=ck_... --secret=cs_...</code> so browser timeouts cannot interrupt the migration.</p></form>
+<div class="mt-8 border bg-white"><div class="border-b p-5 font-medium">Import history</div>@forelse($runs as $run)<div class="border-b p-4 text-sm"><div class="flex flex-wrap justify-between gap-3"><span>#{{ $run->id }} · {{ $run->source_url }}</span><b class="capitalize">{{ $run->status }}</b></div>@if($run->summary)<div class="mt-2 text-xs text-neutral-600">@foreach($run->summary as $k=>$v)<span class="mr-4">{{ ucfirst($k) }}: {{ $v }}</span>@endforeach</div>@endif @if($run->last_error)<div class="mt-2 text-xs text-red-700">{{ $run->last_error }}</div>@endif</div>@empty<div class="p-5 text-sm text-neutral-500">No migration runs yet.</div>@endforelse</div>
+@endsection
