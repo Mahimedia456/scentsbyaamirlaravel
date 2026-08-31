@@ -16,12 +16,69 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $orders=Order::with('customer')->withCount('items')
-            ->when($request->filled('q'),fn($q)=>$q->where(fn($x)=>$x->where('order_number','like','%'.$request->q.'%')->orWhere('customer_name','like','%'.$request->q.'%')->orWhere('customer_email','like','%'.$request->q.'%')))
-            ->when($request->filled('status'),fn($q)=>$q->where('status',$request->status))
-            ->when($request->filled('payment_status'),fn($q)=>$q->where('payment_status',$request->payment_status))
-            ->latest('placed_at')->latest()->paginate(25)->withQueryString();
-        return view('admin.orders.index',compact('orders'));
+        $orders = Order::with('customer')->withCount('items')
+            ->when($request->filled('q'), fn($q) => $q->where(fn($x) => $x
+                ->where('order_number','like','%'.$request->q.'%')
+                ->orWhere('customer_name','like','%'.$request->q.'%')
+                ->orWhere('customer_email','like','%'.$request->q.'%')
+                ->orWhere('tracking_number','like','%'.$request->q.'%')))
+            ->when($request->filled('status'), fn($q) => $q->where('status',$request->status))
+            ->when($request->filled('payment_status'), fn($q) => $q->where('payment_status',$request->payment_status))
+            ->when($request->filled('payment_method'), fn($q) => $q->where('payment_method',$request->payment_method))
+            ->when($request->filled('date_from'), fn($q) => $q->whereDate('placed_at','>=',$request->date_from))
+            ->when($request->filled('date_to'), fn($q) => $q->whereDate('placed_at','<=',$request->date_to))
+            ->latest('placed_at')->latest()
+            ->paginate(25)->withQueryString();
+
+        $summary = [
+            'all' => Order::count(),
+            'open' => Order::whereIn('status',['pending','confirmed','processing'])->count(),
+            'shipped' => Order::where('status','shipped')->count(),
+            'delivered' => Order::where('status','delivered')->count(),
+            'payment_pending' => Order::where('payment_status','pending')->count(),
+        ];
+
+        return view('admin.orders.index',compact('orders','summary'));
+    }
+
+    public function bulk(Request $request, CustomerNotificationService $notifications, OrderInventoryService $inventory, TransactionalMailService $mail)
+    {
+        $data = $request->validate([
+            'ids' => ['required','array','min:1'],
+            'ids.*' => ['integer','exists:orders,id'],
+            'action' => ['required', Rule::in(['confirm','processing','shipped','delivered','cancelled'])],
+        ]);
+
+        $target = match ($data['action']) {
+            'confirm' => 'confirmed',
+            default => $data['action'],
+        };
+
+        foreach (Order::query()->whereIn('id',$data['ids'])->get() as $order) {
+            $old = $order->status;
+
+            if ($old === $target) {
+                continue;
+            }
+
+            $changes = ['status' => $target];
+
+            if (in_array($target,['shipped','delivered'],true) && !$order->fulfilled_at) {
+                $changes['fulfilled_at'] = now();
+            }
+
+            $order->update($changes);
+
+            if ($target === 'cancelled') {
+                $inventory->restockCancelledOrder($order);
+            }
+
+            $fresh = $order->fresh();
+            $notifications->orderUpdated($fresh,$old);
+            $mail->order($fresh,$target);
+        }
+
+        return back()->with('success', count($data['ids']).' order(s) updated and customer notifications processed.');
     }
 
     public function show(Order $order)
@@ -33,19 +90,43 @@ class OrderController extends Controller
     public function update(Request $request, Order $order, CustomerNotificationService $notifications, OrderInventoryService $inventory, TransactionalMailService $mail)
     {
         $oldStatus = $order->status;
-        $data=$request->validate([
-            'status'=>['required',Rule::in(['pending','confirmed','processing','shipped','delivered','cancelled','refunded'])],
-            'payment_status'=>['required',Rule::in(['pending','paid','failed','refunded'])],
-            'payment_method'=>['nullable','string','max:80'],'shipping_method'=>['nullable','string','max:120'],
-            'tracking_number'=>['nullable','string','max:120'],'admin_notes'=>['nullable','string','max:3000'],
+        $oldPaymentStatus = $order->payment_status;
+
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['pending','confirmed','processing','shipped','delivered','cancelled','refunded'])],
+            'payment_status' => ['required', Rule::in(['pending','paid','failed','refunded'])],
+            'payment_method' => ['nullable','string','max:80'],
+            'shipping_method' => ['nullable','string','max:120'],
+            'tracking_number' => ['nullable','string','max:120'],
+            'admin_notes' => ['nullable','string','max:3000'],
         ]);
-        if(in_array($data['status'],['shipped','delivered'],true) && !$order->fulfilled_at)$data['fulfilled_at']=now();
+
+        if (in_array($data['status'], ['shipped','delivered'], true) && !$order->fulfilled_at) {
+            $data['fulfilled_at'] = now();
+        }
+
         $order->update($data);
-        if ($data['status'] === 'cancelled' && $oldStatus !== 'cancelled') $inventory->restockCancelledOrder($order);
+
+        if ($data['status'] === 'cancelled' && $oldStatus !== 'cancelled') {
+            $inventory->restockCancelledOrder($order);
+        }
+
         $fresh = $order->fresh();
         $notifications->orderUpdated($fresh, $oldStatus);
-        if ($oldStatus !== $fresh->status) $mail->order($fresh, $fresh->status);
-        return back()->with('success','Order updated.');
+
+        if ($oldStatus !== $fresh->status) {
+            $mail->order($fresh, $fresh->status);
+        }
+
+        if ($oldPaymentStatus !== $fresh->payment_status) {
+            if ($fresh->payment_status === 'failed') {
+                $mail->order($fresh, 'payment_failed');
+            } elseif ($fresh->payment_status === 'refunded' && $fresh->status !== 'refunded') {
+                $mail->order($fresh, 'refunded');
+            }
+        }
+
+        return back()->with('success','Order updated and applicable customer notifications were processed.');
     }
 
     public function approvePayment(Order $order, CustomerNotificationService $notifications, TransactionalMailService $mail)

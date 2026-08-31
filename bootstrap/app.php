@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [\App\Http\Middleware\SecurityHeaders::class, \App\Http\Middleware\StorefrontSeoRedirects::class]);
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureAdmin::class,
+            'admin.permission' => \App\Http\Middleware\EnsureAdminPermission::class,
             'customer' => \App\Http\Middleware\EnsureCustomer::class,
             'storefront.seo' => \App\Http\Middleware\StorefrontSeoRedirects::class,
         ]);

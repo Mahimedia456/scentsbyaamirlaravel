@@ -37,4 +37,16 @@
         </div>
     </div>
 </section>
+
+@if(session('activation_email'))
+    <div class="mt-6 border border-black/10 bg-white p-5">
+        <p class="text-xs leading-6 text-black/60">Your account is waiting for email activation.</p>
+        <form method="POST" action="{{ route('customer.activation.resend') }}" class="mt-3">
+            @csrf
+            <input type="hidden" name="email" value="{{ session('activation_email') }}">
+            <button class="text-link">Resend activation email</button>
+        </form>
+    </div>
+@endif
+
 @endsection

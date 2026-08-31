@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Notifications\CustomerActivationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
 class CustomerAuthController extends Controller
@@ -25,6 +27,17 @@ class CustomerAuthController extends Controller
             'email' => ['required','email'],
             'password' => ['required','string'],
         ]);
+
+        $customer = Customer::where('email', strtolower(trim($data['email'])))->first();
+
+        if ($customer && Hash::check($data['password'], (string) $customer->password)) {
+            if (!$customer->email_verified_at || !$customer->is_active) {
+                return back()
+                    ->withErrors(['email' => 'Please activate your account from the email we sent before signing in.'])
+                    ->with('activation_email', $customer->email)
+                    ->onlyInput('email');
+            }
+        }
 
         if (Auth::guard('customer')->attempt([
             'email' => $data['email'],
@@ -53,12 +66,18 @@ class CustomerAuthController extends Controller
             'password' => ['required','confirmed',Password::min(8)],
         ]);
 
-        $customer = Customer::create($data + ['is_active' => true]);
+        $data['email'] = strtolower(trim($data['email']));
 
-        Auth::guard('customer')->login($customer);
-        $request->session()->regenerate();
+        $customer = Customer::create($data + [
+            'is_active' => false,
+            'email_verified_at' => null,
+        ]);
 
-        return redirect()->intended(route('account'))->with('success', 'Welcome to your Scents by Aamir account.');
+        $customer->notify(new CustomerActivationNotification());
+
+        return redirect()
+            ->route('customer.login')
+            ->with('success', 'Account created. Check your email and click the activation link before signing in.');
     }
 
     public function logout(Request $request)

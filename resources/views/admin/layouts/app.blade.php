@@ -1,19 +1,195 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title','Admin') — Scents by Aamir</title>@vite(['resources/css/app.css','resources/js/app.js'])
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title','Admin') — Scents by Aamir</title>
+    @vite(['resources/css/admin.css','resources/js/admin.js'])
 </head>
-<body class="bg-[#f4f3ef] text-[#111] antialiased">
-<x-house.page-loader />
-<div class="min-h-screen lg:flex">
-<aside class="hidden w-[280px] shrink-0 bg-black text-white lg:flex lg:flex-col"><div class="border-b border-white/10 px-7 py-7"><a href="{{ route('admin.dashboard') }}"><img src="{{ asset('logo.png') }}" alt="Scents by Aamir" class="h-9 w-auto brightness-0 invert"></a><p class="mt-4 text-[10px] uppercase tracking-[.26em] text-white/45">Administration</p></div>
-@php($nav=[
-['Dashboard','admin.dashboard'],['Products','admin.products.index'],['Categories','admin.categories.index'],['Collections','admin.collections.index'],
-['Orders','admin.orders.index'],['Customers','admin.customers.index'],['Inventory','admin.inventory.index'],['Promotions','admin.coupons.index'],
-['Pages','admin.pages.index'],['Journal','admin.journal-posts.index'],['Navigation','admin.navigations.index'],
-['Media','admin.media.index'],['SEO','admin.seo.index'],['Support','admin.contact-inquiries.index'],['Newsletter','admin.newsletter.index'],['Store Settings','admin.settings.index'],['Shipping','admin.shipping.index'],['Payments','admin.payments.index'],['Analytics','admin.analytics.index'],['Admin Users','admin.admin-users.index'],['Audit Log','admin.audit.index'],['Woo Import','admin.woocommerce.index']])
-<nav class="flex-1 space-y-1 overflow-y-auto px-4 py-5 text-sm">@foreach($nav as [$label,$route])<a href="{{ route($route) }}" class="flex items-center gap-3 px-4 py-2.5 {{ request()->routeIs(str_replace('.index','.*',$route)) || request()->routeIs($route) ? 'bg-white text-black' : 'text-white/65 hover:bg-white/10 hover:text-white' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs(str_replace('.index','.*',$route)) || request()->routeIs($route) ? 'bg-black' : 'bg-white/25' }}"></span>{{ $label }}</a>@endforeach</nav>
-<div class="border-t border-white/10 p-5"><div class="mb-4 px-2"><p class="text-xs font-medium">{{ auth()->user()->name }}</p><p class="mt-1 truncate text-[11px] text-white/45">{{ auth()->user()->email }}</p></div><form method="POST" action="{{ route('admin.logout') }}">@csrf<button class="w-full border border-white/20 px-4 py-2.5 text-left text-xs uppercase tracking-[.16em] hover:bg-white hover:text-black">Sign out</button></form></div></aside>
-<main class="min-w-0 flex-1"><header class="flex min-h-20 items-center justify-between border-b border-black/10 bg-[#f4f3ef] px-5 md:px-8 xl:px-12"><div><p class="text-[10px] uppercase tracking-[.22em] text-black/45">Scents by Aamir</p><h1 class="mt-1 text-lg font-medium">@yield('header','Dashboard')</h1></div><div class="flex items-center gap-3"><a href="{{ route('home') }}" target="_blank" class="border border-black/15 px-4 py-2 text-[10px] uppercase tracking-[.17em] hover:bg-black hover:text-white">View storefront</a><form method="POST" action="{{ route('admin.logout') }}" class="lg:hidden">@csrf<button class="text-xs underline">Logout</button></form></div></header><div class="p-5 md:p-8 xl:p-12">@if(session('success'))<div class="mb-6 border border-emerald-300 bg-emerald-50 p-4 text-sm">{{ session('success') }}</div>@endif @if(session('error'))<div class="mb-6 border border-red-300 bg-red-50 p-4 text-sm">{{ session('error') }}</div>@endif @if($errors->any())<div class="mb-6 border border-red-300 bg-red-50 p-4 text-sm"><ul class="list-disc space-y-1 pl-5">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif @yield('content')</div></main>
-</div></body></html>
+<body>
+@php
+    $navGroups = [
+        'Overview' => [
+            ['Dashboard','admin.dashboard','DB'],
+            ['Analytics','admin.analytics.index','AN'],
+        ],
+        'Commerce' => [
+            ['Orders','admin.orders.index','OR'],
+            ['Customers','admin.customers.index','CU'],
+            ['Inventory','admin.inventory.index','IN'],
+            ['Promotions','admin.coupons.index','PR'],
+        ],
+        'Catalog' => [
+            ['Products','admin.products.index','PD'],
+            ['Categories','admin.categories.index','CT'],
+            ['Collections','admin.collections.index','CL'],
+        ],
+        'Content' => [
+            ['Content Overview','admin.content.index','CM'],
+            ['Pages','admin.pages.index','PG'],
+            ['Journal','admin.journal-posts.index','JR'],
+            ['Navigation','admin.navigations.index','NV'],
+            ['Media','admin.media.index','MD'],
+            ['SEO','admin.seo.index','SE'],
+        ],
+        'Operations' => [
+            ['Support','admin.contact-inquiries.index','SP'],
+            ['Newsletter','admin.newsletter.index','NL'],
+            ['Shipping','admin.shipping.index','SH'],
+            ['Payments','admin.payments.index','PY'],
+        ],
+        'System' => [
+            ['Notifications','admin.notifications.index','NT'],
+            ['Mail Diagnostics','admin.mail-diagnostics.index','EM'],
+            ['Store Settings','admin.settings.index','ST'],
+            ['Admin Users','admin.admin-users.index','US'],
+            ['Audit Log','admin.audit.index','AU'],
+            ['Woo Import','admin.woocommerce.index','WC'],
+        ],
+    ];
+    $routePermissions = [
+        'admin.products.index'=>'catalog',
+        'admin.categories.index'=>'catalog',
+        'admin.collections.index'=>'catalog',
+        'admin.orders.index'=>'orders',
+        'admin.customers.index'=>'customers',
+        'admin.inventory.index'=>'inventory',
+        'admin.coupons.index'=>'promotions',
+        'admin.content.index'=>'content',
+        'admin.pages.index'=>'content',
+        'admin.journal-posts.index'=>'content',
+        'admin.navigations.index'=>'content',
+        'admin.media.index'=>'media',
+        'admin.analytics.index'=>'analytics',
+        'admin.contact-inquiries.index'=>'support',
+        'admin.newsletter.index'=>'content',
+        'admin.settings.index'=>'system',
+        'admin.admin-users.index'=>'system',
+        'admin.audit.index'=>'system',
+        'admin.mail-diagnostics.index'=>'system',
+        'admin.woocommerce.index'=>'system',
+    ];
+
+    $globalUnreadNotifications = \Illuminate\Support\Facades\Schema::hasTable('admin_notifications')
+        ? \App\Models\AdminNotification::query()->visible()->unread()->count()
+        : 0;
+@endphp
+
+<div class="admin-shell" data-admin-shell>
+    <button class="admin-drawer-backdrop" type="button" data-admin-nav-close aria-label="Close navigation"></button>
+
+    <aside class="admin-sidebar">
+        <div class="admin-brand">
+            <a href="{{ route('admin.dashboard') }}" aria-label="Scents by Aamir Admin">
+                <img src="{{ asset('logo.png') }}" alt="Scents by Aamir">
+            </a>
+            <div>
+                <div style="font-size:12px;font-weight:760;letter-spacing:.01em">Enterprise Admin</div>
+                <div style="margin-top:2px;font-size:10px;color:rgba(255,255,255,.38)">Commerce control center</div>
+            </div>
+        </div>
+
+        <nav class="admin-nav-scroll" aria-label="Admin navigation">
+            @foreach($navGroups as $group => $items)
+                <section class="admin-nav-group">
+                    <p class="admin-nav-label">{{ $group }}</p>
+                    @foreach($items as [$label,$route,$icon])
+                        @php
+                            $permission = $routePermissions[$route] ?? 'dashboard';
+                            if (!auth()->user()->canAdmin($permission)) continue;
+                            $pattern = str_ends_with($route,'.index')
+                                ? str_replace('.index','.*',$route)
+                                : $route;
+                            $active = request()->routeIs($route) || request()->routeIs($pattern);
+                        @endphp
+                        <a href="{{ route($route) }}" class="admin-nav-link {{ $active ? 'is-active' : '' }}">
+                            <span class="admin-nav-icon">{{ $icon }}</span>
+                            <span>{{ $label }}</span>
+                        </a>
+                    @endforeach
+                </section>
+            @endforeach
+        </nav>
+
+        <div class="admin-sidebar-footer">
+            <div class="admin-user-card">
+                <div class="admin-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'A',0,1)) }}</div>
+                <div style="min-width:0;flex:1">
+                    <div style="font-size:12px;font-weight:680;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ auth()->user()->name }}</div>
+                    <div style="margin-top:2px;font-size:10px;color:rgba(255,255,255,.38);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ auth()->user()->email }}</div>
+                </div>
+            </div>
+            <form method="POST" action="{{ route('admin.logout') }}" style="margin-top:9px">
+                @csrf
+                <button type="submit" class="admin-nav-link" style="width:100%;border:0;background:transparent;cursor:pointer">
+                    <span class="admin-nav-icon">↗</span><span>Sign out</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                <button type="button" class="admin-btn admin-mobile-button" data-admin-nav-open aria-label="Open navigation">☰</button>
+                <div style="min-width:0">
+                    <div class="admin-eyebrow">@yield('eyebrow','Scents by Aamir')</div>
+                    <h1 class="admin-heading">@yield('header','Dashboard')</h1>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:9px">
+                <button type="button" class="admin-btn admin-search-trigger" data-admin-command-open>
+                    <span>Search</span><kbd>Ctrl K</kbd>
+                </button>
+                <a href="{{ route('admin.notifications.index') }}" class="admin-icon-btn" aria-label="Notifications">
+                    <span>NT</span>
+                    @if($globalUnreadNotifications > 0)
+                        <b class="admin-notification-dot">{{ $globalUnreadNotifications > 99 ? '99+' : $globalUnreadNotifications }}</b>
+                    @endif
+                </a>
+                <a href="{{ route('home') }}" target="_blank" class="admin-btn">View storefront ↗</a>
+            </div>
+        </header>
+
+        <div class="admin-page">
+            @if(session('success'))
+                <div class="admin-alert admin-alert-success">{{ session('success') }}</div>
+            @endif
+            @if(session('error'))
+                <div class="admin-alert admin-alert-danger">{{ session('error') }}</div>
+            @endif
+            @if($errors->any())
+                <div class="admin-alert admin-alert-danger">
+                    <ul style="margin:0;padding-left:18px">
+                        @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+                    </ul>
+                </div>
+            @endif
+            @yield('content')
+        </div>
+    </main>
+</div>
+
+<div class="admin-command" data-admin-command hidden>
+    <button type="button" class="admin-command-backdrop" data-admin-command-close aria-label="Close search"></button>
+    <section class="admin-command-panel" role="dialog" aria-modal="true" aria-label="Admin search">
+        <div class="admin-command-input-wrap">
+            <span class="admin-command-search-icon">⌕</span>
+            <input type="search" autocomplete="off" placeholder="Search products, orders, customers…" data-admin-command-input>
+            <kbd>ESC</kbd>
+        </div>
+        <div class="admin-command-results" data-admin-command-results>
+            <div class="admin-command-empty">
+                Type at least 2 characters to search across commerce records.
+            </div>
+        </div>
+        <div class="admin-command-footer">
+            <span>Quick search</span>
+            <span>Products · Orders · Customers</span>
+        </div>
+    </section>
+</div>
+
+</body>
+</html>

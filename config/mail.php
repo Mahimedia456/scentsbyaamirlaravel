@@ -6,5 +6,5 @@ return [
   'log'=>['transport'=>'log','channel'=>env('MAIL_LOG_CHANNEL')],
   'array'=>['transport'=>'array'],
  ],
- 'from'=>['address'=>env('MAIL_FROM_ADDRESS','hello@scentsbyaamir.com'),'name'=>env('MAIL_FROM_NAME','Scents by Aamir')],
+ 'from'=>['address'=>env('MAIL_FROM_ADDRESS','contact@scentsbyaamir.com'),'name'=>env('MAIL_FROM_NAME','Scents by Aamir')],
 ];

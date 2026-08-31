@@ -27,6 +27,14 @@ Route::get('/journal/{slug}', [\App\Http\Controllers\Storefront\ContentControlle
 
 Route::view('/cart', 'store.cart')->name('cart');
 Route::view('/wishlist', 'store.wishlist')->name('wishlist');
+Route::get('/account/activate/{customer}', [\App\Http\Controllers\Storefront\CustomerActivationController::class, 'activate'])
+    ->middleware(['signed','throttle:12,1'])
+    ->name('customer.activate');
+
+Route::post('/account/activation/resend', [\App\Http\Controllers\Storefront\CustomerActivationController::class, 'resend'])
+    ->middleware('throttle:3,10')
+    ->name('customer.activation.resend');
+
 Route::middleware('guest:customer')->group(function () {
     Route::get('/account/login', [\App\Http\Controllers\Storefront\CustomerAuthController::class, 'login'])->name('customer.login');
     Route::post('/account/login', [\App\Http\Controllers\Storefront\CustomerAuthController::class, 'authenticate'])->name('customer.login.store');
@@ -85,6 +93,9 @@ Route::get('/social/{platform}', function (string $platform) {
 | Admin Panel
 |--------------------------------------------------------------------------
 */
+Route::get('/admin/password/reset/{token}', [\App\Http\Controllers\Admin\AdminPasswordController::class, 'edit'])->middleware('guest')->name('admin.password.reset');
+Route::post('/admin/password/reset', [\App\Http\Controllers\Admin\AdminPasswordController::class, 'update'])->middleware('guest')->name('admin.password.update');
+
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest')->group(function () {
         Route::get('/login', [\App\Http\Controllers\Admin\AuthController::class, 'create'])->name('login');
@@ -95,25 +106,52 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', fn () => redirect()->route('admin.dashboard'));
         Route::get('/dashboard', \App\Http\Controllers\Admin\DashboardController::class)->name('dashboard');
 
-        // Phase 02 — Catalog
+        // Enterprise Admin Phase 02 — Global UX, notifications, diagnostics
+        Route::get('/search', \App\Http\Controllers\Admin\GlobalSearchController::class)->name('search');
+        Route::get('/notifications', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/read-all', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'readAll'])->name('notifications.read-all');
+        Route::post('/notifications/{notification}/read', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'read'])->name('notifications.read');
+        Route::delete('/notifications/{notification}', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'dismiss'])->name('notifications.dismiss');
+
+        Route::get('/system/mail', [\App\Http\Controllers\Admin\MailDiagnosticsController::class, 'index'])->name('mail-diagnostics.index');
+        Route::post('/system/mail/test', [\App\Http\Controllers\Admin\MailDiagnosticsController::class, 'test'])
+            ->middleware('throttle:5,10')
+            ->name('mail-diagnostics.test');
+
+        // Phase 02 / Enterprise Phase 03 — Catalog
+        Route::post('/products/bulk', [\App\Http\Controllers\Admin\ProductController::class, 'bulk'])->name('products.bulk');
+        Route::post('/products/{product}/duplicate', [\App\Http\Controllers\Admin\ProductController::class, 'duplicate'])->name('products.duplicate');
         Route::resource('products', \App\Http\Controllers\Admin\ProductController::class)->except('show');
         Route::resource('categories', \App\Http\Controllers\Admin\CategoryController::class)->except('show');
         Route::resource('collections', \App\Http\Controllers\Admin\CollectionController::class)->except('show');
 
-        // Phase 03 — Orders & Customers
+        // Enterprise Admin Phase 04 — Orders & Customers
+        Route::post('/orders/bulk', [\App\Http\Controllers\Admin\OrderController::class, 'bulk'])->name('orders.bulk');
         Route::resource('orders', \App\Http\Controllers\Admin\OrderController::class)->only(['index','show','update']);
         Route::post('/orders/{order}/payment/approve', [\App\Http\Controllers\Admin\OrderController::class, 'approvePayment'])->name('orders.payment.approve');
         Route::post('/orders/{order}/payment/reject', [\App\Http\Controllers\Admin\OrderController::class, 'rejectPayment'])->name('orders.payment.reject');
         Route::get('/orders/{order}/payment/receipt', [\App\Http\Controllers\Admin\OrderController::class, 'receipt'])->name('orders.payment.receipt');
+        Route::post('/customers/bulk', [\App\Http\Controllers\Admin\CustomerController::class, 'bulk'])->name('customers.bulk');
+        Route::post('/customers/{customer}/activate', [\App\Http\Controllers\Admin\CustomerController::class, 'activate'])->name('customers.activate');
+        Route::post('/customers/{customer}/deactivate', [\App\Http\Controllers\Admin\CustomerController::class, 'deactivate'])->name('customers.deactivate');
+        Route::post('/customers/{customer}/restore', [\App\Http\Controllers\Admin\CustomerController::class, 'restore'])->name('customers.restore');
+        Route::post('/customers/{customer}/resend-activation', [\App\Http\Controllers\Admin\CustomerController::class, 'resendActivation'])->name('customers.resend-activation');
         Route::resource('customers', \App\Http\Controllers\Admin\CustomerController::class);
 
         // Phase 04 — Inventory & Promotions
         Route::get('/inventory', [\App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('inventory.index');
         Route::post('/inventory/adjust', [\App\Http\Controllers\Admin\InventoryController::class, 'adjust'])->name('inventory.adjust');
+        Route::post('/inventory/{product}/availability', [\App\Http\Controllers\Admin\InventoryController::class, 'availability'])->name('inventory.availability');
+        Route::get('/inventory-export', [\App\Http\Controllers\Admin\InventoryController::class, 'export'])->name('inventory.export');
+        Route::post('/coupons/{coupon}/toggle', [\App\Http\Controllers\Admin\CouponController::class, 'toggle'])->name('coupons.toggle');
+        Route::post('/coupons/{coupon}/duplicate', [\App\Http\Controllers\Admin\CouponController::class, 'duplicate'])->name('coupons.duplicate');
         Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class)->except('show');
 
-        // Phase 05 — CMS, Journal & Navigation
+        // Enterprise Admin Phase 06 — CMS, Journal, Navigation & Media
+        Route::get('/content', \App\Http\Controllers\Admin\ContentDashboardController::class)->name('content.index');
+        Route::post('/pages/{page}/duplicate', [\App\Http\Controllers\Admin\PageController::class, 'duplicate'])->name('pages.duplicate');
         Route::resource('pages', \App\Http\Controllers\Admin\PageController::class)->except('show');
+        Route::post('/journal-posts/{journal_post}/duplicate', [\App\Http\Controllers\Admin\JournalPostController::class, 'duplicate'])->name('journal-posts.duplicate');
         Route::resource('journal-posts', \App\Http\Controllers\Admin\JournalPostController::class)->except('show');
         Route::resource('navigations', \App\Http\Controllers\Admin\NavigationController::class)->except('show');
 
@@ -121,14 +159,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Phase 06 — Media + SEO
         Route::get('/media', [\App\Http\Controllers\Admin\MediaController::class, 'index'])->name('media.index');
         Route::post('/media', [\App\Http\Controllers\Admin\MediaController::class, 'store'])->name('media.store');
+        Route::put('/media/{media}', [\App\Http\Controllers\Admin\MediaController::class, 'update'])->name('media.update');
         Route::delete('/media/{media}', [\App\Http\Controllers\Admin\MediaController::class, 'destroy'])->name('media.destroy');
         Route::get('/seo', [\App\Http\Controllers\Admin\SeoController::class, 'index'])->name('seo.index');
         Route::post('/seo/redirects', [\App\Http\Controllers\Admin\SeoController::class, 'store'])->name('seo.store');
         Route::delete('/seo/redirects/{redirect}', [\App\Http\Controllers\Admin\SeoController::class, 'destroy'])->name('seo.destroy');
 
         // Phase 07 — Settings + Shipping + Payments
-        Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
-        Route::put('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+        Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->middleware('admin.permission:system')->name('settings.index');
+        Route::put('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->middleware('admin.permission:system')->name('settings.update');
         Route::get('/shipping', [\App\Http\Controllers\Admin\ShippingController::class, 'index'])->name('shipping.index');
         Route::post('/shipping', [\App\Http\Controllers\Admin\ShippingController::class, 'store'])->name('shipping.store');
         Route::delete('/shipping/{zone}', [\App\Http\Controllers\Admin\ShippingController::class, 'destroy'])->name('shipping.destroy');
@@ -136,10 +175,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/payments/{payment}', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'update'])->name('payments.update');
 
         // Phase 08 — Analytics + Roles + Audit
-        Route::get('/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('analytics.index');
-        Route::get('/admin-users', [\App\Http\Controllers\Admin\AdminUserController::class, 'index'])->name('admin-users.index');
-        Route::post('/admin-users', [\App\Http\Controllers\Admin\AdminUserController::class, 'store'])->name('admin-users.store');
-        Route::get('/audit', [\App\Http\Controllers\Admin\AuditController::class, 'index'])->name('audit.index');
+        Route::get('/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->middleware('admin.permission:analytics')->name('analytics.index');
+        Route::get('/analytics-export', [\App\Http\Controllers\Admin\AnalyticsController::class, 'export'])->middleware('admin.permission:analytics')->name('analytics.export');
+        Route::get('/admin-users', [\App\Http\Controllers\Admin\AdminUserController::class, 'index'])->middleware('admin.permission:system')->name('admin-users.index');
+        Route::post('/admin-users', [\App\Http\Controllers\Admin\AdminUserController::class, 'store'])->middleware('admin.permission:system')->name('admin-users.store');
+        Route::put('/admin-users/{user}', [\App\Http\Controllers\Admin\AdminUserController::class, 'update'])->middleware('admin.permission:system')->name('admin-users.update');
+        Route::post('/admin-users/{user}/toggle', [\App\Http\Controllers\Admin\AdminUserController::class, 'toggle'])->middleware('admin.permission:system')->name('admin-users.toggle');
+        Route::post('/admin-users/{user}/reset-password', [\App\Http\Controllers\Admin\AdminUserController::class, 'reset'])->middleware('admin.permission:system')->name('admin-users.reset');
+        Route::delete('/admin-users/{user}', [\App\Http\Controllers\Admin\AdminUserController::class, 'destroy'])->middleware('admin.permission:system')->name('admin-users.destroy');
+        Route::get('/audit', [\App\Http\Controllers\Admin\AuditController::class, 'index'])->middleware('admin.permission:system')->name('audit.index');
+        Route::get('/audit-export', [\App\Http\Controllers\Admin\AuditController::class, 'export'])->middleware('admin.permission:system')->name('audit.export');
 
         // Storefront Integration Phase 10 — Customer Care + Newsletter
         Route::get('/contact-inquiries', [\App\Http\Controllers\Admin\ContactInquiryController::class, 'index'])->name('contact-inquiries.index');
