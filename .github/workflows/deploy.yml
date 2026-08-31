@@ -1,26 +1,34 @@
 name: Deploy Scents by Aamir
+
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+
 concurrency:
   group: scents-production
   cancel-in-progress: true
+
 jobs:
   deploy:
     name: Build and deploy to StackCP
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: '24'
           cache: npm
+
       - name: Build Vite assets
         run: |
           npm ci
           npm run build
+
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.STACKCP_SSH_KEY }}
@@ -30,6 +38,7 @@ jobs:
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
       - name: Deploy Laravel source
         env:
           SSH_HOST: ${{ secrets.STACKCP_HOST }}
@@ -39,19 +48,36 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "
             set -e
             cd '$APP_PATH'
+
+            echo '=== Fetching latest source ==='
             git fetch origin main
             git reset --hard origin/main
-            /usr/php84/usr/bin/php /usr/local/bin/composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+            echo '=== Installing Composer dependencies ==='
+            /usr/php84/usr/bin/php /usr/local/bin/composer install \
+              --no-dev \
+              --no-interaction \
+              --prefer-dist \
+              --optimize-autoloader
+
+            echo '=== Clearing Laravel caches ==='
             /usr/php84/usr/bin/php artisan optimize:clear
+
+            echo '=== Running migrations ==='
             /usr/php84/usr/bin/php artisan migrate --force
           "
+
       - name: Upload compiled Vite assets
         env:
           SSH_HOST: ${{ secrets.STACKCP_HOST }}
           SSH_USER: ${{ secrets.STACKCP_USER }}
           APP_PATH: ${{ secrets.STACKCP_APP_PATH }}
         run: |
-          rsync -az --delete -e "ssh -i ~/.ssh/id_ed25519" public/build/ "$SSH_USER@$SSH_HOST:$APP_PATH/public/build/"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            public/build/ \
+            "$SSH_USER@$SSH_HOST:$APP_PATH/public/build/"
+
       - name: Warm Laravel views and routes
         env:
           SSH_HOST: ${{ secrets.STACKCP_HOST }}
@@ -61,6 +87,12 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "
             set -e
             cd '$APP_PATH'
+
+            echo '=== Caching routes ==='
             /usr/php84/usr/bin/php artisan route:cache
+
+            echo '=== Caching views ==='
             /usr/php84/usr/bin/php artisan view:cache
+
+            echo '=== Deployment completed successfully ==='
           "
