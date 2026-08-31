@@ -449,26 +449,41 @@ class WooCommerceImporter
     {
         $name = strtolower((string) ($woo['name'] ?? ''));
 
-        if (str_contains($name, 'tester box') || str_contains($name, '5 x 5ml') || str_contains($name, '5ml each')) {
+        // Only tester products are 5 ML. Discovery products are not part of
+        // the tester-size rule in Scents by Aamir.
+        $isTester = str_contains($name, 'tester');
+
+        if ($isTester && (
+            str_contains($name, 'tester box')
+            || str_contains($name, '5 x 5ml')
+            || str_contains($name, '5ml each')
+        )) {
             return '5 × 5 ML';
         }
 
-        foreach (($woo['attributes'] ?? []) as $attribute) {
-            $attributeName = strtolower(trim((string) ($attribute['name'] ?? '')));
+        // Tester products may use the imported 5 ML/box size metadata.
+        if ($isTester) {
+            foreach (($woo['attributes'] ?? []) as $attribute) {
+                $attributeName = strtolower(trim((string) ($attribute['name'] ?? '')));
 
-            if (!in_array($attributeName, ['size', 'volume', 'capacity'], true)) {
-                continue;
+                if (!in_array($attributeName, ['size', 'volume', 'capacity'], true)) {
+                    continue;
+                }
+
+                $options = $attribute['options'] ?? [];
+                $value = is_array($options) ? ($options[0] ?? null) : $options;
+
+                if ($value) {
+                    return $this->normalizeSize((string) $value);
+                }
             }
 
-            $options = $attribute['options'] ?? [];
-            $value = is_array($options) ? ($options[0] ?? null) : $options;
-
-            if ($value) {
-                return $this->normalizeSize((string) $value);
-            }
+            return '5 ML';
         }
 
-        // Project rule: standard Scents by Aamir fragrance bottles are 50 ML.
+        // Project rule: every non-tester fragrance, including discovery
+        // products, is presented as 50 ML. This intentionally overrides stale
+        // Woo 5ml attributes left from the previous storefront.
         return ($woo['type'] ?? 'simple') === 'simple' ? '50 ML' : null;
     }
 
