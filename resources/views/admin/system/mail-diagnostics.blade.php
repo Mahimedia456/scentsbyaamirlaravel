@@ -18,6 +18,9 @@
                 ['Mailer',$mailer ?: '—'],
                 ['SMTP host',$host ?: '—'],
                 ['SMTP port',$port ?: '—'],
+                ['SMTP scheme',$scheme ?: '—'],
+                ['SMTP username',$username ?: '—'],
+                ['SMTP password',$passwordSet ? 'SET' : 'MISSING'],
                 ['From address',$from ?: '—'],
                 ['From name',$fromName ?: '—'],
             ] as [$label,$value])
@@ -56,12 +59,12 @@
     <h3 style="margin:7px 0 18px;font-size:17px">Transactional system</h3>
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
         @foreach([
-            ['Customer activation','Active','success'],
-            ['Activation resend','Active','success'],
-            ['Order lifecycle emails','Phase 03','warning'],
-            ['Admin new-order alert','Phase 03','warning'],
-            ['Password / security email','Phase 07','warning'],
-            ['Final deliverability QA','Phase 08','warning'],
+            ['Customer activation','Wired','success'],
+            ['Activation resend','Wired','success'],
+            ['Forgot / reset password','Wired','success'],
+            ['Order lifecycle emails','Wired','success'],
+            ['Admin new-order alert','Wired','success'],
+            ['SMTP transport',$configured ? 'Ready' : 'Check settings',$configured ? 'success' : 'warning'],
         ] as [$name,$state,$kind])
             <div style="padding:15px;border:1px solid #e4e7ec;border-radius:11px">
                 <div style="font-size:11px;font-weight:680">{{ $name }}</div>

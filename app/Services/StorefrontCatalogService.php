@@ -25,6 +25,9 @@ class StorefrontCatalogService
                         ->orWhere('subtitle', 'like', "%{$term}%")
                         ->orWhere('description', 'like', "%{$term}%")
                         ->orWhere('notes', 'like', "%{$term}%")
+                        ->orWhere('top_notes', 'like', "%{$term}%")
+                        ->orWhere('heart_notes', 'like', "%{$term}%")
+                        ->orWhere('base_notes', 'like', "%{$term}%")
                         ->orWhere('sku', 'like', "%{$term}%");
                 });
             }
@@ -72,6 +75,9 @@ class StorefrontCatalogService
                     $q->where('subtitle', 'like', "%{$family}%")
                         ->orWhere('name', 'like', "%{$family}%")
                         ->orWhere('notes', 'like', "%{$family}%")
+                        ->orWhere('top_notes', 'like', "%{$family}%")
+                        ->orWhere('heart_notes', 'like', "%{$family}%")
+                        ->orWhere('base_notes', 'like', "%{$family}%")
                         ->orWhereHas('category', fn ($c) => $c
                             ->where('name', 'like', "%{$family}%")
                             ->orWhere('slug', 'like', '%'.Str::slug($family).'%'));
@@ -374,6 +380,9 @@ class StorefrontCatalogService
             'description' => $this->plainText($product->description),
             'story' => $this->plainText($product->story),
             'notes' => $this->plainText($product->notes),
+            'top_notes' => $this->plainText($product->top_notes),
+            'heart_notes' => $this->plainText($product->heart_notes),
+            'base_notes' => $this->plainText($product->base_notes),
             'wear' => $this->plainText($product->wear),
             'sku' => $variant?->sku ?: $product->sku,
             'size_label' => $variant?->size_label
@@ -438,6 +447,9 @@ class StorefrontCatalogService
             'description' => null,
             'story' => null,
             'notes' => null,
+            'top_notes' => null,
+            'heart_notes' => null,
+            'base_notes' => null,
             'wear' => null,
             'sku' => null,
             'stock' => 99,

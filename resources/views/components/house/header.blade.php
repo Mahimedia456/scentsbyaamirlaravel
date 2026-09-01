@@ -68,8 +68,6 @@
                 <a href="{{ route('wishlist') }}" class="ui-label hidden md:block">Wishlist</a>
                 <a
                     href="{{ route('cart') }}"
-                    data-no-page-loader
-                    @click.prevent="$store.commerce.cartOpen=true; window.dispatchEvent(new CustomEvent('sba:open-cart'))"
                     class="house-header-action"
                     aria-label="Open cart"
                 >

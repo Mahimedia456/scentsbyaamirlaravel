@@ -19,6 +19,7 @@ class CheckMailConfiguration extends Command
         $host = (string) config('mail.mailers.smtp.host');
         $port = (string) config('mail.mailers.smtp.port');
         $username = (string) config('mail.mailers.smtp.username');
+        $scheme = (string) config('mail.mailers.smtp.scheme');
 
         $this->table(
             ['Setting', 'Effective value'],
@@ -27,6 +28,7 @@ class CheckMailConfiguration extends Command
                 ['MAIL_FROM_ADDRESS', $from ?: '(empty)'],
                 ['SMTP host', $host ?: '(empty)'],
                 ['SMTP port', $port ?: '(empty)'],
+                ['SMTP scheme', $scheme ?: '(empty)'],
                 ['SMTP username', $username ?: '(empty)'],
                 ['SMTP password', filled(config('mail.mailers.smtp.password')) ? 'SET' : 'MISSING'],
             ]

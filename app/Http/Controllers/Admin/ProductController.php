@@ -217,6 +217,9 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'story' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
+            'top_notes' => ['nullable', 'string', 'max:1000'],
+            'heart_notes' => ['nullable', 'string', 'max:1000'],
+            'base_notes' => ['nullable', 'string', 'max:1000'],
             'wear' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['draft', 'active', 'archived'])],
             'sku' => ['nullable', 'string', 'max:100', Rule::unique('products', 'sku')->ignore($id)],
@@ -251,6 +254,16 @@ class ProductController extends Controller
         $data['is_in_stock'] = $request->boolean('is_in_stock');
         $data['stock'] = (int) ($data['stock'] ?? 0);
         $data['stock_quantity'] = $data['stock'];
+
+        $structuredNotes = collect([
+            filled($data['top_notes'] ?? null) ? 'Top Notes: ' . trim((string) $data['top_notes']) : null,
+            filled($data['heart_notes'] ?? null) ? 'Heart Notes: ' . trim((string) $data['heart_notes']) : null,
+            filled($data['base_notes'] ?? null) ? 'Base Notes: ' . trim((string) $data['base_notes']) : null,
+        ])->filter()->implode("\n");
+
+        if ($structuredNotes !== '') {
+            $data['notes'] = $structuredNotes;
+        }
 
         if ($data['track_inventory']) {
             $data['is_in_stock'] = $data['stock'] > 0;

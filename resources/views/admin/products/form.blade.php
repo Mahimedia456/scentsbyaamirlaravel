@@ -46,20 +46,50 @@
                     <label style="font-size:11px;font-weight:680">Subtitle
                         <input class="admin-field" style="margin-top:7px" name="subtitle" value="{{ old('subtitle',$product->subtitle) }}">
                     </label>
-                    <label style="font-size:11px;font-weight:680">Description
-                        <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:140px" name="description">{{ old('description',$product->description) }}</textarea>
+                    <label style="font-size:11px;font-weight:680">Product description
+                        <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:160px" name="description" placeholder="Main product description shown in the dedicated storefront Description section.">{{ old('description',$product->description) }}</textarea>
+                        <span class="admin-muted" style="display:block;margin-top:6px;font-size:9px;font-weight:400">Do not put Top / Heart / Base notes here. They have dedicated fields below.</span>
                     </label>
                 </div>
             </section>
 
             <section class="admin-card">
-                <div class="admin-card-header"><div><div class="admin-eyebrow">Fragrance content</div><div style="margin-top:4px;font-size:14px;font-weight:700">Story, notes & wear</div></div></div>
+                <div class="admin-card-header">
+                    <div>
+                        <div class="admin-eyebrow">Fragrance content</div>
+                        <div style="margin-top:4px;font-size:14px;font-weight:700">Story, structured notes & wear</div>
+                    </div>
+                    <span class="admin-muted" style="font-size:10px">Notes stay separate from product description</span>
+                </div>
+
                 <div style="padding:20px;display:grid;gap:15px">
-                    @foreach([['story','Story'],['notes','Notes'],['wear','Wear']] as [$field,$label])
-                        <label style="font-size:11px;font-weight:680">{{ $label }}
-                            <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:110px" name="{{ $field }}">{{ old($field,$product->{$field}) }}</textarea>
+                    <label style="font-size:11px;font-weight:680">Story / short description
+                        <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:110px" name="story">{{ old('story',$product->story) }}</textarea>
+                    </label>
+
+                    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+                        <label style="font-size:11px;font-weight:680">Top notes
+                            <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:120px" name="top_notes" placeholder="Bergamot, Ambroxan">{{ old('top_notes',$product->top_notes) }}</textarea>
                         </label>
-                    @endforeach
+
+                        <label style="font-size:11px;font-weight:680">Heart notes
+                            <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:120px" name="heart_notes" placeholder="Woody Notes, Floral Accords">{{ old('heart_notes',$product->heart_notes) }}</textarea>
+                        </label>
+
+                        <label style="font-size:11px;font-weight:680">Base notes
+                            <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:120px" name="base_notes" placeholder="Musk, Patchouli, Ambergris">{{ old('base_notes',$product->base_notes) }}</textarea>
+                        </label>
+                    </div>
+
+                    <label style="font-size:11px;font-weight:680">Wear / usage guidance
+                        <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:100px" name="wear">{{ old('wear',$product->wear) }}</textarea>
+                    </label>
+
+                    <details>
+                        <summary class="admin-muted" style="cursor:pointer;font-size:10px">Legacy combined notes field</summary>
+                        <textarea class="admin-field" style="margin-top:10px;padding-top:11px;min-height:90px" name="notes">{{ old('notes',$product->notes) }}</textarea>
+                        <span class="admin-muted" style="display:block;margin-top:6px;font-size:9px">Compatibility only. It is rebuilt automatically from Top / Heart / Base notes when those fields are filled.</span>
+                    </details>
                 </div>
             </section>
 
@@ -192,6 +222,9 @@
 
 <style>
 @media(max-width:1000px){form>div:nth-child(2){grid-template-columns:1fr!important} form aside{position:static!important}}
-@media(max-width:760px){.admin-card div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:760px){
+    .admin-card div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+    .admin-card div[style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr!important}
+}
 </style>
 @endsection

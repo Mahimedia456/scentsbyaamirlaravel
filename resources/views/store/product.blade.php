@@ -217,40 +217,57 @@
     | that real content visible and use restrained supporting defaults instead
     | of inventing an overly specific pyramid.
     */
-    $noteSource = trim(implode(' ', array_filter([
-        $notesText,
-        strip_tags((string) ($visual['description'] ?? '')),
-        $story,
-    ])));
+    /*
+    |--------------------------------------------------------------------------
+    | Structured fragrance notes
+    |--------------------------------------------------------------------------
+    | Product Description is never a note source. The database now stores
+    | Top / Heart / Base notes independently. Legacy `notes` is fallback-only.
+    */
+    $extractLegacyNote = function (string $label, array $stops = []) use ($notesText): ?string {
+        $source = trim((string) $notesText);
 
-    $extractNoteGroup = function (string $label, ?string $nextLabel = null) use ($noteSource): ?string {
-        if ($noteSource === '') {
+        if ($source === '') {
             return null;
         }
 
-        $end = $nextLabel
-            ? '(?=\s*' . preg_quote($nextLabel, '/') . '\s*:|$)'
-            : '(?=$)';
+        $lookahead = '$';
 
-        if (preg_match('/' . preg_quote($label, '/') . '\s*:\s*(.+?)' . $end . '/is', $noteSource, $match)) {
-            $value = trim(preg_replace('/\s+/', ' ', strip_tags($match[1])));
-            return $value !== '' ? $value : null;
+        if ($stops !== []) {
+            $alternation = implode('|', array_map(
+                fn (string $stop) => preg_quote($stop, '/'),
+                $stops
+            ));
+
+            $lookahead = '(?=\s*(?:' . $alternation . ')\s*:?\s*|$)';
         }
 
-        return null;
+        if (!preg_match(
+            '/' . preg_quote($label, '/') . '\s*:?\s*(.+?)' . $lookahead . '/is',
+            $source,
+            $match
+        )) {
+            return null;
+        }
+
+        $value = trim(preg_replace('/\s+/', ' ', strip_tags($match[1])));
+
+        return $value !== '' ? rtrim($value, " .;,-") : null;
     };
 
-    $topNotes = $world['top_notes']
-        ?? $extractNoteGroup('Top Notes', 'Heart Notes')
-        ?? 'Opening notes';
+    $topNotes = trim((string) ($visual['top_notes'] ?? ''))
+        ?: $extractLegacyNote('Top Notes', ['Heart Notes', 'Base Notes'])
+        ?: 'Opening notes';
 
-    $heartNotes = $world['heart_notes']
-        ?? $extractNoteGroup('Heart Notes', 'Base Notes')
-        ?? ($notesText ?: 'Signature accord');
+    $heartNotes = trim((string) ($visual['heart_notes'] ?? ''))
+        ?: $extractLegacyNote('Heart Notes', ['Base Notes'])
+        ?: 'Signature accord';
 
-    $baseNotes = $world['base_notes']
-        ?? $extractNoteGroup('Base Notes')
-        ?? 'Dry woods · Amber · Musk';
+    $baseNotes = trim((string) ($visual['base_notes'] ?? ''))
+        ?: $extractLegacyNote('Base Notes')
+        ?: 'Dry woods · Amber · Musk';
+
+    $productDescription = trim((string) ($visual['description'] ?? ''));
 
     /*
     |--------------------------------------------------------------------------
@@ -593,6 +610,7 @@
     <section class="bg-white text-black">
         <div class="house-container py-14 lg:py-20">
             <div class="grid gap-10 lg:grid-cols-[.85fr_1.15fr] lg:items-start">
+
                 <article class="lg:pr-10">
                     <p class="ui-label text-black/32">The fragrance</p>
 
@@ -630,9 +648,32 @@
                         </article>
                     @endforeach
                 </div>
+
             </div>
         </div>
     </section>
+
+    {{-- PRODUCT DESCRIPTION --}}
+    @if($productDescription)
+        <section class="bg-[#f6f4ef] text-black">
+            <div class="house-container py-12 lg:py-16">
+                <div class="grid gap-8 border-y border-black/10 py-10 lg:grid-cols-[.32fr_.68fr] lg:items-start">
+                    <div>
+                        <p class="ui-label text-black/32">Product description</p>
+                        <h2 class="mt-4 display-serif text-[38px] leading-[.96] sm:text-[46px]">
+                            About {{ $name }}
+                        </h2>
+                    </div>
+
+                    <div class="max-w-[820px]">
+                        <p class="text-[13px] leading-8 text-black/62">
+                            {{ $productDescription }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    @endif
 
     {{-- SCENT WORLD BANNER --}}
     <section class="bg-[#f6f4ef] text-white">
@@ -706,35 +747,72 @@
         </div>
     </section>
 
-    {{-- MATERIALS --}}
+    {{-- PRODUCT DETAIL STUDY --}}
     <section class="bg-white text-black">
-        <div class="house-container py-16 lg:py-24">
-            <div class="flex flex-col gap-6 border-b border-black/10 pb-8 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <p class="ui-label text-black/35">Material study</p>
-                    <h2 class="mt-3 display-serif text-[46px] leading-[.94] sm:text-[58px]">Inside {{ $name }}</h2>
-                </div>
+        <div class="house-container py-14 lg:py-20">
+
+            <div class="mx-auto max-w-[900px] text-center">
+                <p class="ui-label text-black/35">Product study</p>
+                <h2 class="mt-3 display-serif text-[46px] leading-[.94] sm:text-[58px]">Inside {{ $name }}</h2>
+                <p class="mx-auto mt-5 max-w-[650px] text-[11px] leading-6 text-black/48">
+                    A concise view of the fragrance family, character and signature material direction.
+                </p>
+            </div>
+
+            <div class="mx-auto mt-10 grid max-w-[1180px] gap-px bg-black/10 lg:grid-cols-3">
+                <article class="bg-[#f7f6f2] p-8 text-center lg:min-h-[260px]">
+                    <div class="flex h-full flex-col items-center justify-center">
+                        <p class="ui-label text-black/30">Fragrance family</p>
+                        <h3 class="mt-7 display-serif text-[40px] leading-[.96]">{{ $family }}</h3>
+                        <p class="mx-auto mt-4 max-w-[320px] text-[11px] leading-6 text-black/52">
+                            {{ \Illuminate\Support\Str::limit($story, 180) }}
+                        </p>
+                    </div>
+                </article>
+
+                <article class="bg-[#f7f6f2] p-8 text-center lg:min-h-[260px]">
+                    <div class="flex h-full flex-col items-center justify-center">
+                        <p class="ui-label text-black/30">Character</p>
+                        <h3 class="mt-7 display-serif text-[40px] leading-[.96]">{{ $mood }}</h3>
+                        <p class="mt-4 text-[10px] uppercase tracking-[.12em] text-black/40">
+                            {{ $audience }} · {{ $occasion }}
+                        </p>
+                    </div>
+                </article>
+
+                <article class="bg-[#101010] p-8 text-center text-white lg:min-h-[260px]">
+                    <div class="flex h-full flex-col items-center justify-center">
+                        <p class="ui-label text-white/32">Key material</p>
+
+                        @if($matchedMaterials->isNotEmpty())
+                            <h3 class="mt-7 display-serif text-[40px] leading-[.96]">
+                                {{ $matchedMaterials->first()['name'] }}
+                            </h3>
+
+                            <p class="mt-4 text-[10px] uppercase tracking-[.12em] text-white/40">
+                                {{ $matchedMaterials->first()['desc'] }}
+                            </p>
+
+                            <a
+                                href="{{ route('ingredients.show', $matchedMaterials->first()['slug']) }}"
+                                class="mt-6 inline-block text-link text-white"
+                            >
+                                Discover material →
+                            </a>
+                        @else
+                            <h3 class="mt-7 display-serif text-[40px] leading-[.96]">Eau de Parfum</h3>
+                            <p class="mx-auto mt-4 max-w-[320px] text-[11px] leading-6 text-white/50">
+                                A concentrated Scents by Aamir composition designed to unfold from opening through dry-down.
+                            </p>
+                        @endif
+                    </div>
+                </article>
+            </div>
+
+            <div class="mt-8 text-center">
                 <a href="{{ route('ingredients') }}" class="text-link">Explore all materials →</a>
             </div>
 
-            <div class="grid gap-px bg-black/10 sm:grid-cols-3">
-                @foreach($matchedMaterials as $material)
-                    <a
-                        href="{{ route('ingredients.show', $material['slug']) }}"
-                        class="group bg-[#f7f6f2] p-7 transition hover:bg-[#efebe3] sm:min-h-[220px]"
-                    >
-                        <div class="flex h-full flex-col justify-between">
-                            <span class="ui-label text-black/30">Material</span>
-
-                            <div class="mt-12">
-                                <h3 class="display-serif text-4xl sm:text-5xl">{{ $material['name'] }}</h3>
-                                <p class="mt-3 text-[10px] uppercase tracking-[.12em] text-black/40">{{ $material['desc'] }}</p>
-                                <span class="mt-6 inline-block text-link">Discover →</span>
-                            </div>
-                        </div>
-                    </a>
-                @endforeach
-            </div>
         </div>
     </section>
 

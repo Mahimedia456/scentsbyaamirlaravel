@@ -62,6 +62,9 @@ class ExportProductImagePrompts extends Command
             $description = trim(strip_tags((string) ($product->description ?? '')));
             $story = trim(strip_tags((string) ($product->short_description ?? $product->story ?? '')));
             $notes = trim(strip_tags((string) ($product->notes ?? '')));
+            $topNotes = trim(strip_tags((string) ($product->top_notes ?? '')));
+            $heartNotes = trim(strip_tags((string) ($product->heart_notes ?? '')));
+            $baseNotes = trim(strip_tags((string) ($product->base_notes ?? '')));
 
             $descriptionText = $description !== ''
                 ? $description

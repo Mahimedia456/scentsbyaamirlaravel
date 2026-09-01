@@ -18,6 +18,11 @@ use Illuminate\Support\Str;
 
 class WooCommerceImporter
 {
+    public function __construct(
+        private readonly ProductContentParser $productContentParser
+    ) {
+    }
+
     private string $base;
     private string $key;
     private string $secret;
@@ -174,14 +179,24 @@ class WooCommerceImporter
                     ? in_array($stockStatus, ['instock', 'onbackorder'], true)
                     : ($trackInventory ? $stockQuantity > 0 : true);
 
+                $content = $this->productContentParser->parse(
+                    $this->clean($woo['description'] ?? ''),
+                    null
+                );
+
                 $product = Product::updateOrCreate(
                     ['slug' => $this->slug($woo['slug'] ?? $woo['name'] . '-' . $woo['id'])],
                     [
                         'category_id' => $categoryId,
                         'name' => $woo['name'] ?? 'Imported product',
                         'subtitle' => null,
-                        'description' => $this->clean($woo['description'] ?? ''),
+                        'description' => $content['description']
+                            ?: $this->clean($woo['description'] ?? ''),
                         'story' => $this->clean($woo['short_description'] ?? ''),
+                        'notes' => $content['notes_summary'],
+                        'top_notes' => $content['top_notes'],
+                        'heart_notes' => $content['heart_notes'],
+                        'base_notes' => $content['base_notes'],
                         'status' => $status,
                         'is_featured' => (bool) ($woo['featured'] ?? false),
                         'base_price' => $price,

@@ -20,10 +20,16 @@ class MailDiagnosticsController extends Controller
         $port = config('mail.mailers.smtp.port');
         $from = config('mail.from.address');
         $fromName = config('mail.from.name');
+        $scheme = config('mail.mailers.smtp.scheme');
+        $username = config('mail.mailers.smtp.username');
+        $passwordSet = filled(config('mail.mailers.smtp.password'));
 
         $configured = $mailer === 'smtp'
+            && in_array($scheme, ['smtp', 'smtps'], true)
             && filled($host)
             && $host !== '127.0.0.1'
+            && filled($username)
+            && $passwordSet
             && filled($from);
 
         return view('admin.system.mail-diagnostics', compact(
@@ -32,6 +38,9 @@ class MailDiagnosticsController extends Controller
             'port',
             'from',
             'fromName',
+            'scheme',
+            'username',
+            'passwordSet',
             'configured'
         ));
     }
