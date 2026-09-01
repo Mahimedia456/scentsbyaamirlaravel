@@ -135,8 +135,11 @@ document.addEventListener('alpine:init', () => {
     syncing: false,
     notice: '',
     storageVersion: commerceStorageVersion,
+    initialized: false,
 
     init() {
+      if (this.initialized) return;
+      this.initialized = true;
       const oldVersion = Number(localStorage.getItem('sba_commerce_version') || 1);
       if (oldVersion < commerceStorageVersion) this.persist();
       this.validateCart();
@@ -144,10 +147,14 @@ document.addEventListener('alpine:init', () => {
     },
 
     persist() {
-      localStorage.setItem('sba_cart', JSON.stringify(this.cart));
-      localStorage.setItem('sba_wishlist', JSON.stringify(this.wishlist));
-      localStorage.setItem('sba_recently_viewed', JSON.stringify(this.recentlyViewed));
-      localStorage.setItem('sba_commerce_version', String(commerceStorageVersion));
+      try {
+        localStorage.setItem('sba_cart', JSON.stringify(this.cart));
+        localStorage.setItem('sba_wishlist', JSON.stringify(this.wishlist));
+        localStorage.setItem('sba_recently_viewed', JSON.stringify(this.recentlyViewed));
+        localStorage.setItem('sba_commerce_version', String(commerceStorageVersion));
+      } catch (error) {
+        console.warn('Scents by Aamir local cart storage:', error);
+      }
     },
 
     lineKey(product) {
@@ -157,26 +164,49 @@ document.addEventListener('alpine:init', () => {
       return `fallback:${product.slug || 'product'}:${String(product.size || 'default').toLowerCase()}`;
     },
 
-    async addToCart(product) {
+    addToCart(product) {
       const normalized = {
         ...product,
         product_id: product.product_id ?? product.id ?? null,
         variant_id: product.variant_id ?? null,
         qty: Math.max(1, Number(product.qty || 1)),
         price_value: moneyValue(product.price_value ?? product.price),
+        available: product.available !== false,
       };
+
+      const declaredStock = Number(normalized.stock || 0);
+      const stockLimit = declaredStock > 0
+        ? declaredStock
+        : (normalized.variant_id ? 0 : (normalized.available === false ? 0 : 99));
+
+      if (normalized.available === false || stockLimit <= 0) {
+        this.notice = 'This fragrance is currently unavailable.';
+        this.cartOpen = true;
+        return;
+      }
+
+      normalized.stock = stockLimit;
+      normalized.available = true;
       normalized.line_key = this.lineKey(normalized);
 
       const found = this.cart.find((item) => this.lineKey(item) === normalized.line_key);
       if (found) {
-        found.qty += normalized.qty;
+        const nextQty = Number(found.qty || 1) + normalized.qty;
+        found.qty = Math.min(nextQty, stockLimit);
+        found.available = true;
+        found.image = normalized.image || found.image || null;
       } else {
-        this.cart.push({ ...normalized, available: normalized.available !== false });
+        normalized.qty = Math.min(normalized.qty, stockLimit);
+        this.cart.push(normalized);
       }
 
+      this.notice = 'Added to your shopping bag.';
       this.persist();
       this.cartOpen = true;
-      await this.validateCart();
+
+      // Cart must feel immediate. Server validation runs in the background and
+      // never blocks the drawer from opening or the item from being stored.
+      window.setTimeout(() => this.validateCart(), 0);
     },
 
     removeFromCart(index) {
@@ -195,27 +225,69 @@ document.addEventListener('alpine:init', () => {
     },
 
     async validateCart() {
-      if (!this.cart.length || this.syncing) return;
+      if (!this.cart.length) {
+        this.syncing = false;
+        this.notice = '';
+        return;
+      }
+
+      if (this.syncing) return;
+
       this.syncing = true;
-      this.notice = '';
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 7000);
+
       try {
         const response = await fetch('/api/v1/store/cart/validate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
           body: JSON.stringify({ items: this.cart }),
+          signal: controller.signal,
         });
-        if (!response.ok) throw new Error('Cart validation failed');
+
+        if (!response.ok) throw new Error(`Cart validation failed: ${response.status}`);
+
         const payload = await response.json();
         const data = payload.data || {};
-        if (Array.isArray(data.items)) {
-          const changed = data.items.some((item) => item.status && !['ok', 'fallback'].includes(item.status));
-          this.cart = data.items;
-          if (changed) this.notice = 'Your bag was refreshed using current price and stock.';
+
+        if (Array.isArray(data.items) && data.items.length > 0) {
+          const previousByKey = new Map(
+            this.cart.map((item) => [this.lineKey(item), item])
+          );
+
+          const refreshed = data.items.map((item) => {
+            const previous = previousByKey.get(this.lineKey(item));
+
+            return {
+              ...item,
+              qty: Math.max(1, Number(item.qty || previous?.qty || 1)),
+              price_value: moneyValue(item.price_value ?? item.price ?? previous?.price_value),
+              image: item.image || previous?.image || null,
+            };
+          });
+
+          const changed = refreshed.some((item) =>
+            item.status && !['ok', 'fallback'].includes(item.status)
+          );
+
+          this.cart = refreshed;
+          this.notice = changed
+            ? 'Your bag was refreshed using current price and availability.'
+            : '';
           this.persist();
         }
-      } catch (_) {
-        // Keep the local bag available if the API is temporarily unreachable.
+      } catch (error) {
+        // Local cart remains usable when validation is slow/unreachable.
+        if (error?.name !== 'AbortError') {
+          console.warn('Scents by Aamir cart validation:', error);
+        }
       } finally {
+        window.clearTimeout(timeout);
         this.syncing = false;
       }
     },
@@ -298,6 +370,10 @@ document.addEventListener('alpine:init', () => {
 
 
 Alpine.start();
+
+// Initialize immediately. Store init() is idempotent, so this is safe whether
+// this module executes before or after DOMContentLoaded.
+window.Alpine?.store('commerce')?.init();
 
 // Robust cart entry-point used by the header. If Alpine is available the drawer
 // opens; the header still has /cart as a normal href fallback when JS fails.
@@ -506,9 +582,14 @@ document.addEventListener('DOMContentLoaded', () => {
     revealed = true;
     window.setTimeout(() => loader.classList.add('is-hidden'), 180);
   };
+  let navigationFailsafe = null;
+
   const show = () => {
     revealed = false;
     loader.classList.remove('is-hidden');
+
+    window.clearTimeout(navigationFailsafe);
+    navigationFailsafe = window.setTimeout(reveal, 2600);
   };
 
   if (document.readyState === 'complete') reveal();
@@ -517,8 +598,10 @@ document.addEventListener('DOMContentLoaded', () => {
   window.setTimeout(reveal, 2200); // fail-safe if an external asset stalls
 
   document.addEventListener('click', (event) => {
+    if (event.defaultPrevented) return;
+
     const link = event.target.closest('a[href]');
-    if (!link) return;
+    if (!link || link.hasAttribute('data-no-page-loader')) return;
     const href = link.getAttribute('href') || '';
     if (!href || href.startsWith('#') || href.startsWith('javascript:') || link.target === '_blank' || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     try {

@@ -40,6 +40,10 @@ Route::middleware('guest:customer')->group(function () {
     Route::post('/account/login', [\App\Http\Controllers\Storefront\CustomerAuthController::class, 'authenticate'])->name('customer.login.store');
     Route::get('/account/register', [\App\Http\Controllers\Storefront\CustomerAuthController::class, 'register'])->name('customer.register');
     Route::post('/account/register', [\App\Http\Controllers\Storefront\CustomerAuthController::class, 'store'])->name('customer.register.store');
+    Route::get('/account/forgot-password', [\App\Http\Controllers\Storefront\CustomerPasswordController::class, 'requestForm'])->name('customer.password.request');
+    Route::post('/account/forgot-password', [\App\Http\Controllers\Storefront\CustomerPasswordController::class, 'email'])->middleware('throttle:5,10')->name('customer.password.email');
+    Route::get('/account/reset-password/{token}', [\App\Http\Controllers\Storefront\CustomerPasswordController::class, 'resetForm'])->name('customer.password.reset');
+    Route::post('/account/reset-password', [\App\Http\Controllers\Storefront\CustomerPasswordController::class, 'reset'])->middleware('throttle:8,10')->name('customer.password.update');
 });
 Route::middleware('customer')->group(function () {
     Route::get('/account', [\App\Http\Controllers\Storefront\AccountController::class, 'index'])->name('account');

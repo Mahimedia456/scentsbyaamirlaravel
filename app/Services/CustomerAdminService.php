@@ -19,7 +19,7 @@ class CustomerAdminService
         }
 
         $url = URL::temporarySignedRoute(
-            'account.activate',
+            'customer.activate',
             now()->addHours(48),
             ['customer' => $customer->id, 'hash' => sha1($customer->email)]
         );

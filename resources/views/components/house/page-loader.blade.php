@@ -3,13 +3,34 @@
         <img
             src="{{ asset('logo-02.png') }}"
             alt=""
-            width="210"
-            height="56"
             class="house-page-loader__logo"
-            style="display:block;width:min(210px,58vw);height:56px;max-width:210px;max-height:56px;object-fit:contain;object-position:center;margin:0 auto 24px;"
-            decoding="async"
         >
         <div class="house-page-loader__line"><span></span></div>
-        <p>Scents by Aamir</p>
+        <p>Preparing the house</p>
     </div>
 </div>
+
+<script>
+    (() => {
+        const hide = () => {
+            const loader = document.getElementById('house-page-loader');
+            if (!loader) return;
+            loader.classList.add('is-hidden');
+        };
+
+        window.__hideHouseLoader = hide;
+
+        if (document.readyState === 'complete') {
+            window.setTimeout(hide, 80);
+        } else {
+            window.addEventListener('load', () => window.setTimeout(hide, 80), { once: true });
+        }
+
+        // Independent fail-safe: loader can never trap the storefront even if
+        // a Vite module or third-party asset throws before app.js initializes.
+        window.setTimeout(hide, 1800);
+        window.addEventListener('pageshow', hide);
+        window.addEventListener('error', () => window.setTimeout(hide, 0));
+        window.addEventListener('unhandledrejection', () => window.setTimeout(hide, 0));
+    })();
+</script>

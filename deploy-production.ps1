@@ -1,314 +1,169 @@
 ﻿param(
-    [string]$CommitMessage = "Deploy Scents by Aamir production"
+    [string]$CommitMessage = "Deploy Scents by Aamir production",
+    [switch]$RepairProducts
 )
 
 $ErrorActionPreference = "Stop"
 
-# ============================================================
-# SCENTS BY AAMIR - ONE CLICK PRODUCTION DEPLOY
-# ============================================================
-
 $ProjectRoot = $PSScriptRoot
-
 $GitBranch = "main"
 $GitRemote = "origin"
-
 $SshHost = "ssh.gb.stackcp.com"
 $SshUser = "scentsbyaamir.com"
-$SshKey  = "C:\Users\hp\.ssh\scentsbyaamir_github_actions_nopass"
-
+$SshKey = "C:\Users\hp\.ssh\scentsbyaamir_github_actions_nopass"
 $ServerPath = "/home/sites/41b/8/81d92349b7/public_html/shop/laravel12"
-
 $Php = "/usr/php84/usr/bin/php"
 $Composer = "/usr/local/bin/composer"
-
 $ProductionUrl = "https://shop.scentsbyaamir.com"
 
-# ============================================================
-# HELPERS
-# ============================================================
-
-function Write-Step {
-    param([string]$Message)
-
+function Write-Step([string]$Message) {
     Write-Host ""
-    Write-Host "============================================================" `
-        -ForegroundColor DarkGray
+    Write-Host "============================================================" -ForegroundColor DarkGray
     Write-Host $Message -ForegroundColor Cyan
-    Write-Host "============================================================" `
-        -ForegroundColor DarkGray
+    Write-Host "============================================================" -ForegroundColor DarkGray
 }
 
-function Assert-Success {
-    param([string]$Step)
-
+function Assert-Success([string]$Step) {
     if ($LASTEXITCODE -ne 0) {
         throw "$Step failed with exit code $LASTEXITCODE."
     }
 }
 
-# ============================================================
-# PROJECT CHECK
-# ============================================================
-
 Set-Location $ProjectRoot
 
 Write-Step "1/7 - Checking local Laravel project"
 
-if (-not (Test-Path ".\artisan")) {
-    throw "artisan not found. Script must be inside Laravel frontend root."
-}
-
-if (-not (Test-Path ".\package.json")) {
-    throw "package.json not found."
-}
-
-if (-not (Test-Path $SshKey)) {
-    throw "SSH private key not found: $SshKey"
-}
+if (-not (Test-Path ".\artisan")) { throw "artisan not found in $ProjectRoot" }
+if (-not (Test-Path ".\package.json")) { throw "package.json not found." }
+if (-not (Test-Path $SshKey)) { throw "SSH private key not found: $SshKey" }
 
 git rev-parse --is-inside-work-tree | Out-Null
 Assert-Success "Git repository check"
 
 $currentBranch = (git branch --show-current).Trim()
-Assert-Success "Git branch check"
-
 if ($currentBranch -ne $GitBranch) {
-
-    Write-Host "Switching to main branch..." -ForegroundColor Yellow
-
     git checkout $GitBranch
-
-    Assert-Success "Git checkout"
+    Assert-Success "git checkout $GitBranch"
 }
 
-# ============================================================
-# LOCAL VITE BUILD
-# ============================================================
+Write-Step "2/7 - Validating Blade and building Vite locally"
 
-Write-Step "2/7 - Building frontend locally"
+php artisan optimize:clear
+Assert-Success "php artisan optimize:clear"
 
-$npm = Get-Command npm -ErrorAction SilentlyContinue
+# This is the deployment gate: all Blade templates must compile before push.
+php artisan view:cache
+Assert-Success "php artisan view:cache"
+php artisan view:clear
+Assert-Success "php artisan view:clear"
 
-if (-not $npm) {
-    throw "npm is not installed/found on this Windows machine."
+if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+    throw "npm is not available on this Windows machine."
 }
-
-Write-Host "npm version:" -ForegroundColor Green
-
-npm --version
-
-Assert-Success "npm version"
 
 if (Test-Path ".\package-lock.json") {
-
-    Write-Host ""
-    Write-Host "Running npm ci..." -ForegroundColor Green
-
     npm ci
-
-    Assert-Success "npm ci"
-}
-else {
-
-    Write-Host ""
-    Write-Host "Running npm install..." -ForegroundColor Yellow
-
+} else {
     npm install
-
-    Assert-Success "npm install"
 }
-
-Write-Host ""
-Write-Host "Building Vite..." -ForegroundColor Green
+Assert-Success "npm dependency install"
 
 npm run build
-
 Assert-Success "npm run build"
 
 if (-not (Test-Path ".\public\build\manifest.json")) {
-
-    throw "public\build\manifest.json was not generated."
+    throw "Vite manifest was not generated: public\build\manifest.json"
 }
 
-Write-Host ""
-Write-Host "Vite build successful." -ForegroundColor Green
-
-# ============================================================
-# GIT COMMIT
-# ============================================================
-
-Write-Step "3/7 - Committing application"
+Write-Step "3/7 - Committing application and production build"
 
 git add -A
-
 Assert-Success "git add"
 
 $changes = git status --porcelain
-
 if ($changes) {
-
-    Write-Host "Creating Git commit..." -ForegroundColor Green
-
     git commit -m $CommitMessage
-
     Assert-Success "git commit"
-}
-else {
-
-    Write-Host "No new changes to commit." -ForegroundColor Yellow
+} else {
+    Write-Host "No new local changes to commit." -ForegroundColor Yellow
 }
 
 $LocalCommit = (git rev-parse --short HEAD).Trim()
 
-# ============================================================
-# GITHUB PUSH
-# ============================================================
-
 Write-Step "4/7 - Pushing main to GitHub"
 
 git push $GitRemote $GitBranch
-
 Assert-Success "git push"
 
-Write-Host ""
-Write-Host "GitHub commit: $LocalCommit" -ForegroundColor Green
+Write-Step "5/7 - Preparing one-session StackCP deployment"
 
-# ============================================================
-# CREATE REMOTE DEPLOY COMMAND
-# ============================================================
-
-Write-Step "5/7 - Preparing StackCP deployment"
-
-#
-# IMPORTANT:
-# We deliberately use ONE SSH invocation.
-#
-# Previous script:
-#   SSH test -> success
-#   second SSH with piped bash -> authentication failure
-#
-# This version performs the entire deployment through one
-# authenticated SSH command.
-#
+$RemoteProductRepair = ""
+if ($RepairProducts) {
+    $RemoteProductRepair = @"
+echo '--- One-time simple product size / availability repair ---'
+'$Php' artisan storefront:repair-simple-products
+"@
+}
 
 $RemoteCommand = @"
-set -e;
+set -e
+cd '$ServerPath'
 
-echo '============================================================';
-echo 'SCENTS BY AAMIR PRODUCTION DEPLOYMENT';
-echo '============================================================';
+echo '--- Connected to StackCP ---'
+pwd
 
-echo '';
-echo 'SSH CONNECTED';
-pwd;
+echo '--- Updating origin/main ---'
+git fetch '$GitRemote'
+git checkout '$GitBranch'
+git reset --hard '$GitRemote/$GitBranch'
 
-echo '';
-echo '--- Entering production directory ---';
-cd '$ServerPath';
-pwd;
+echo '--- Production commit ---'
+git rev-parse --short HEAD
 
-echo '';
-echo '--- Fetching GitHub main ---';
-git fetch '$GitRemote';
+echo '--- Composer production dependencies ---'
+'$Php' '$Composer' install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-echo '';
-echo '--- Checking out main ---';
-git checkout '$GitBranch';
+echo '--- Clear stale Laravel caches ---'
+'$Php' artisan optimize:clear
 
-echo '';
-echo '--- Resetting production to origin/main ---';
-git reset --hard '$GitRemote/$GitBranch';
+echo '--- Run pending migrations ---'
+'$Php' artisan migrate --force
 
-echo '';
-echo '--- Production commit ---';
-git rev-parse --short HEAD;
+$RemoteProductRepair
 
-echo '';
-echo '--- Installing Composer dependencies ---';
-'$Php' '$Composer' install --no-dev --no-interaction --prefer-dist --optimize-autoloader;
+echo '--- Storage link ---'
+'$Php' artisan storage:link || true
 
-echo '';
-echo '--- Clearing old Laravel caches ---';
-'$Php' artisan optimize:clear;
+echo '--- Compile Blade views as production validation ---'
+'$Php' artisan view:cache
 
-echo '';
-echo '--- Running database migrations ---';
-'$Php' artisan migrate --force;
+echo '--- Cache routes ---'
+'$Php' artisan route:cache
 
-echo '';
-echo '--- Ensuring storage link exists ---';
-'$Php' artisan storage:link || true;
+echo '--- Verify Vite manifest ---'
+test -f public/build/manifest.json
 
-echo '';
-echo '--- Clearing runtime caches ---';
-'$Php' artisan optimize:clear;
+echo '--- Environment ---'
+'$Php' artisan about --only=environment
 
-echo '';
-echo '--- Building route cache ---';
-'$Php' artisan route:cache;
+echo '--- Migration status ---'
+'$Php' artisan migrate:status
 
-echo '';
-echo '--- Building Blade view cache ---';
-'$Php' artisan view:cache;
+echo '--- Mail configuration ---'
+'$Php' artisan storefront:mail-check
 
-echo '';
-echo '--- Checking Vite production manifest ---';
+echo '--- Customer password routes ---'
+'$Php' artisan route:list --path=account/forgot-password
+'$Php' artisan route:list --path=account/reset-password
 
-if [ ! -f 'public/build/manifest.json' ]; then
-    echo 'ERROR: public/build/manifest.json is missing.';
-    exit 20;
-fi;
-
-echo 'Vite manifest OK';
-
-echo '';
-echo '--- Migration status ---';
-'$Php' artisan migrate:status;
-
-echo '';
-echo '--- Laravel environment ---';
-'$Php' artisan about --only=environment;
-
-echo '';
-echo '--- Admin order routes ---';
-'$Php' artisan route:list --path=admin/orders;
-
-echo '';
-echo '--- Final Git commit ---';
-git rev-parse --short HEAD;
-
-echo '';
-echo '============================================================';
-echo 'PRODUCTION DEPLOYMENT SUCCESSFUL';
-echo '============================================================';
+echo '--- Final commit ---'
+git rev-parse --short HEAD
 "@
 
-# Convert command to Base64.
-#
-# This avoids:
-# - PowerShell pipe/STDIN issues
-# - bash -s second SSH issue
-# - multiline quoting problems
-# - CRLF problems
-#
-
-$RemoteBytes = [System.Text.Encoding]::UTF8.GetBytes($RemoteCommand)
-
-$RemoteBase64 = [Convert]::ToBase64String($RemoteBytes)
-
+$RemoteBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($RemoteCommand))
 $ServerExecutor = "echo '$RemoteBase64' | base64 -d | bash"
 
-# ============================================================
-# ONE SSH SESSION
-# ============================================================
-
-Write-Step "6/7 - Deploying to StackCP"
-
-Write-Host ""
-Write-Host "Connecting to:" -ForegroundColor Green
-Write-Host "$SshUser@$SshHost"
-Write-Host ""
+Write-Step "6/7 - Deploying through one SSH session"
 
 ssh `
     -T `
@@ -326,42 +181,12 @@ ssh `
 
 Assert-Success "Production SSH deployment"
 
-# ============================================================
-# COMPLETE
-# ============================================================
-
-Write-Step "7/7 - Deployment completed"
-
-Write-Host ""
+Write-Step "7/7 - Deployment complete"
 Write-Host "DEPLOYMENT SUCCESSFUL" -ForegroundColor Green
-
-Write-Host ""
-Write-Host "Project : Scents by Aamir"
-Write-Host "Branch  : $GitBranch"
-Write-Host "Commit  : $LocalCommit"
-Write-Host "Server  : $SshHost"
-Write-Host "Path    : $ServerPath"
-
-Write-Host ""
-Write-Host "Production:" -ForegroundColor Green
-Write-Host $ProductionUrl -ForegroundColor Green
-
-Write-Host ""
-Write-Host "Deployment flow:" -ForegroundColor Cyan
-Write-Host "Local npm ci"
-Write-Host "Local Vite build"
-Write-Host "Git commit"
-Write-Host "GitHub main push"
-Write-Host "ONE StackCP SSH session"
-Write-Host "git reset origin/main"
-Write-Host "Composer install"
-Write-Host "Laravel migrate"
-Write-Host "Laravel cache clear"
-Write-Host "route:cache"
-Write-Host "view:cache"
-Write-Host "production verification"
-
-Write-Host ""
-Write-Host "Server npm is NOT required." -ForegroundColor Yellow
-Write-Host "config:cache is intentionally NOT used." -ForegroundColor Yellow
-Write-Host ""
+Write-Host "Commit : $LocalCommit"
+Write-Host "URL    : $ProductionUrl" -ForegroundColor Green
+Write-Host "Server npm is not required. Vite is built locally." -ForegroundColor Yellow
+Write-Host "config:cache is intentionally not used." -ForegroundColor Yellow
+if ($RepairProducts) {
+    Write-Host "One-time simple product repair was requested and executed." -ForegroundColor Green
+}

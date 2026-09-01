@@ -114,10 +114,19 @@ class OrderPlacementService
                         ]);
                     }
 
-                    if (!$variant && !$tracked && !(bool) ($product->is_in_stock ?? false)) {
-                        throw ValidationException::withMessages([
-                            "items.$index" => "{$product->name}: this product is currently out of stock."
-                        ]);
+                    if (!$variant && !$tracked) {
+                        $identity = strtolower(trim(($product->name ?? '') . ' ' . ($product->slug ?? '')));
+                        $isTester = str_contains($identity, 'tester');
+
+                        $simpleAvailable = !$isTester
+                            ? true
+                            : (bool) ($product->is_in_stock ?? false);
+
+                        if (!$simpleAvailable) {
+                            throw ValidationException::withMessages([
+                                "items.$index" => "{$product->name}: this product is currently out of stock."
+                            ]);
+                        }
                     }
 
                     $price = (float) ($variant?->price ?? $product->base_price ?? 0);

@@ -308,6 +308,9 @@ class StorefrontCatalogService
 
         $price = $variant?->price ?? $product->base_price ?? 0;
 
+        $productIdentity = strtolower(trim(($product->name ?? '') . ' ' . ($product->slug ?? '')));
+        $isTesterProduct = str_contains($productIdentity, 'tester');
+
         if ($product->variants->isNotEmpty()) {
             $stock = (int) $product->variants->sum(
                 fn ($v) => max((int) ($v->stock ?? 0), (int) ($v->stock_quantity ?? 0))
@@ -318,16 +321,24 @@ class StorefrontCatalogService
                 (int) ($product->stock ?? 0),
                 (int) ($product->stock_quantity ?? 0)
             );
-            $inStock = (bool) ($product->track_inventory ?? false)
-                ? $trackedStock > 0
-                : (bool) ($product->is_in_stock ?? false);
 
-            // Untracked Woo simple products have no numeric quantity. A generous
-            // cart ceiling is used only for UI quantity control; checkout still
-            // validates is_in_stock from the live Laravel product record.
-            $stock = (bool) ($product->track_inventory ?? false)
-                ? $trackedStock
-                : ($inStock ? 99 : 0);
+            if ((bool) ($product->track_inventory ?? false)) {
+                $inStock = $trackedStock > 0;
+                $stock = $trackedStock;
+            } else {
+                /*
+                 * This imported SBA catalogue uses Woo simple products.
+                 * Normal active fragrances are sold as simple 50 ML products
+                 * and do not have numeric stock quantities. Tester products
+                 * retain their explicit availability flag.
+                 */
+                $inStock = $isTesterProduct
+                    ? (bool) ($product->is_in_stock ?? false)
+                    : true;
+
+                // UI quantity ceiling only. Checkout still validates the live product.
+                $stock = $inStock ? 99 : 0;
+            }
         }
 
         return [
@@ -342,7 +353,9 @@ class StorefrontCatalogService
             'price_value' => (float) $price,
             'compare_at_price' => $variant?->compare_at_price ?? $product->compare_at_price,
             'badge' => $product->is_featured ? 'Featured' : ($visual['badge'] ?? null),
-            'image' => $this->imageUrl($primary?->path) ?: ($visual['image'] ?? null),
+            'image' => $this->productArtworkUrl($product->slug)
+                ?: $this->imageUrl($primary?->path)
+                ?: ($visual['image'] ?? null),
             'world_image' => $this->imageUrl($secondary?->path) ?: ($visual['world_image'] ?? $this->imageUrl($primary?->path) ?? $visual['image'] ?? null),
             'images' => $product->images
                 ->sortByDesc(fn ($image) => (bool) $image->is_primary)
@@ -363,7 +376,8 @@ class StorefrontCatalogService
             'notes' => $this->plainText($product->notes),
             'wear' => $this->plainText($product->wear),
             'sku' => $variant?->sku ?: $product->sku,
-            'size_label' => $variant?->size_label ?: ($product->size_label ?: '50 ML'),
+            'size_label' => $variant?->size_label
+                ?: ($isTesterProduct ? '5 ML' : '50 ML'),
             'track_inventory' => (bool) ($product->track_inventory ?? false),
             'stock' => $stock,
             'in_stock' => $inStock,
@@ -435,6 +449,19 @@ class StorefrontCatalogService
                 ['id' => null, 'name' => '100 ML', 'size_label' => '100 ML', 'sku' => null, 'price' => $product['price'] ?? '0', 'price_value' => (float) str_replace(',', '', $product['price'] ?? '0'), 'stock' => 99, 'in_stock' => true],
             ],
         ];
+    }
+
+    private function productArtworkUrl(?string $slug, string $filename = 'hero.webp'): ?string
+    {
+        if (!$slug) {
+            return null;
+        }
+
+        $relative = 'images/products/' . trim($slug, '/') . '/' . ltrim($filename, '/');
+
+        return file_exists(public_path($relative))
+            ? asset($relative)
+            : null;
     }
 
     private function imageUrl(?string $path): ?string

@@ -72,7 +72,8 @@ class StorefrontCommerceService
                 'family' => $product->subtitle ?: ($product->category?->name ?: 'Fine Fragrance'),
                 'price' => number_format($price, 0, '.', ','),
                 'price_value' => $price,
-                'image' => $primary?->path ? $this->imageUrl($primary->path) : Arr::get($item, 'image'),
+                'image' => $this->productArtworkUrl($product->slug)
+                    ?: ($primary?->path ? $this->imageUrl($primary->path) : Arr::get($item, 'image')),
                 'available' => $available,
                 'stock' => $stock,
                 'status' => $available ? 'ok' : 'out_of_stock',
@@ -147,7 +148,8 @@ class StorefrontCommerceService
                     ?: ($product->size_label ?: ($line['size'] ?? '50 ML'))),
             'price' => number_format($price, 0, '.', ','),
             'price_value' => $price,
-            'image' => $primary?->path ? $this->imageUrl($primary->path) : ($line['image'] ?? null),
+            'image' => $this->productArtworkUrl($product->slug)
+                ?: ($primary?->path ? $this->imageUrl($primary->path) : ($line['image'] ?? null)),
             'qty' => $qty,
             'stock' => $stock,
             'available' => $available,
@@ -208,6 +210,19 @@ class StorefrontCommerceService
             return $this->productStock($product) > 0;
         }
 
+        $identity = strtolower(trim(($product->name ?? '') . ' ' . ($product->slug ?? '')));
+        $isTester = str_contains($identity, 'tester');
+
+        /*
+         * SBA catalogue rule:
+         * normal active Woo simple fragrances are available as 50 ML products
+         * when numeric inventory tracking is not enabled.
+         * Tester products keep their explicit availability flag.
+         */
+        if (!$isTester && ($product->status ?? 'active') === 'active') {
+            return true;
+        }
+
         return (bool) ($product->is_in_stock ?? false);
     }
 
@@ -223,6 +238,19 @@ class StorefrontCommerceService
     private function toFloat(mixed $value): float
     {
         return (float) str_replace(',', '', (string) $value);
+    }
+
+    private function productArtworkUrl(?string $slug, string $filename = 'hero.webp'): ?string
+    {
+        if (!$slug) {
+            return null;
+        }
+
+        $relative = 'images/products/' . trim($slug, '/') . '/' . ltrim($filename, '/');
+
+        return file_exists(public_path($relative))
+            ? asset($relative)
+            : null;
     }
 
     private function imageUrl(string $path): string

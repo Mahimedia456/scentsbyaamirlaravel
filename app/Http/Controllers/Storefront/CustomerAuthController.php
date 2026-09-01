@@ -73,11 +73,17 @@ class CustomerAuthController extends Controller
             'email_verified_at' => null,
         ]);
 
-        $customer->notify(new CustomerActivationNotification());
+        try {
+            $customer->notify(new CustomerActivationNotification());
+            $message = 'Account created. Check your email and click the activation link before signing in.';
+        } catch (\Throwable $e) {
+            report($e);
+            $message = 'Account created, but the activation email could not be delivered. Use Resend activation after mail is configured.';
+        }
 
         return redirect()
             ->route('customer.login')
-            ->with('success', 'Account created. Check your email and click the activation link before signing in.');
+            ->with('success', $message);
     }
 
     public function logout(Request $request)

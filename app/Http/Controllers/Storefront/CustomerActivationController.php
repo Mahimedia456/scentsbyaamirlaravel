@@ -36,7 +36,11 @@ class CustomerActivationController extends Controller
 
         // Do not leak whether an email exists.
         if ($customer && !$customer->email_verified_at) {
-            $customer->notify(new CustomerActivationNotification());
+            try {
+                $customer->notify(new CustomerActivationNotification());
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
 
         return back()->with('success', 'If that account is awaiting activation, a new activation email has been sent.');

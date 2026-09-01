@@ -6,7 +6,6 @@
 @section('content')
 <section
     x-data
-    x-init="$store.commerce.validateCart()"
     class="min-h-[78vh] bg-[#f7f6f2] pt-[100px] text-black"
 >
     <div class="border-b border-black/10 bg-white">
@@ -51,7 +50,13 @@
                 <template x-for="(item,index) in $store.commerce.cart" :key="item.line_key || `${item.slug}-${item.size}`">
                     <article class="grid gap-5 border-b border-black/10 p-5 sm:grid-cols-[120px_1fr_130px_130px] sm:items-center sm:p-6">
                         <a :href="item.slug ? `/product/${item.slug}` : '#'" class="relative aspect-[4/5] overflow-hidden bg-[#efeee9]">
-                            <img x-show="item.image" :src="item.image" :alt="item.name || 'Fragrance'" class="absolute inset-0 h-full w-full object-cover">
+                            <img
+                                x-show="item.image"
+                                :src="item.image"
+                                :alt="item.name || 'Fragrance'"
+                                class="absolute inset-0 h-full w-full object-cover"
+                                x-on:error="$el.onerror=null; $el.src='/logo-02.png'; $el.classList.remove('object-cover'); $el.classList.add('object-contain','p-5')"
+                            >
                         </a>
 
                         <div class="min-w-0">

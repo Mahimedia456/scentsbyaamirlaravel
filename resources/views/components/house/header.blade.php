@@ -1,7 +1,7 @@
 <div
-    x-data="{ mobileMenu:false }"
-    x-init="$watch('mobileMenu', value => window.dispatchEvent(new CustomEvent('house:scroll-lock', { detail: { locked: value, source: 'mobile-menu' } })))"
-    @keydown.escape.window="mobileMenu=false; if ($store.site) $store.site.megaOpen=false"
+    x-data="{ mobileMenu:false, megaOpen:false }"
+    x-init="$watch('mobileMenu', value => window.dispatchEvent(new CustomEvent('house:scroll-lock', { detail: { locked: value, source: 'mobile-menu' } }))); $watch('megaOpen', value => window.dispatchEvent(new CustomEvent('house:scroll-lock', { detail: { locked: value, source: 'desktop-mega' } })))"
+    @keydown.escape.window="mobileMenu=false; megaOpen=false"
     data-house-header
     class="fixed inset-x-0 top-0 z-[85]"
 >
@@ -32,10 +32,10 @@
                 {{-- Desktop mega menu --}}
                 <button
                     type="button"
-                    @click="$store.site.megaOpen=true"
+                    @click="megaOpen=true"
                     class="ui-label hidden min-h-[44px] items-center gap-3 lg:flex"
                     aria-label="Open menu"
-                    :aria-expanded="$store.site.megaOpen"
+                    :aria-expanded="megaOpen"
                 >
                     <span class="relative block h-3 w-[18px]" aria-hidden="true">
                         <span class="absolute left-0 top-[2px] h-px w-[18px] bg-black"></span>
@@ -68,6 +68,7 @@
                 <a href="{{ route('wishlist') }}" class="ui-label hidden md:block">Wishlist</a>
                 <a
                     href="{{ route('cart') }}"
+                    data-no-page-loader
                     @click.prevent="$store.commerce.cartOpen=true; window.dispatchEvent(new CustomEvent('sba:open-cart'))"
                     class="house-header-action"
                     aria-label="Open cart"
@@ -156,6 +157,7 @@
             </div>
         </div>
     </div>
-</div>
 
-<x-house.mega-menu />
+    {{-- Desktop mega menu must live inside this x-data scope so megaOpen works. --}}
+    <x-house.mega-menu />
+</div>
