@@ -1,0 +1,11 @@
+{
+  "version": "V2",
+  "goal": "mobile Lighthouse/PageSpeed second pass",
+  "key_fixes": [
+    "mobile page loader fully disabled",
+    "mobile first hero server-rendered/static",
+    "desktop carousel preserved",
+    "responsive images from V1 retained",
+    "desktop-only deferred motion retained"
+  ]
+}

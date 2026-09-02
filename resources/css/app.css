@@ -760,3 +760,27 @@ input[type="search"]::-webkit-search-cancel-button {
     transform: none !important;
   }
 }
+
+/* 2026-09 mobile Lighthouse pass 2: the loader must never cover mobile LCP. */
+@media (max-width: 767px) {
+  .house-page-loader {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .house-page-loader *,
+  .house-page-loader *::before,
+  .house-page-loader *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .sba-home-hero img {
+    transition: none !important;
+    transform: none !important;
+  }
+}
