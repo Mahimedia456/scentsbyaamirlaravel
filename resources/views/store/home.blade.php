@@ -123,7 +123,32 @@
         'images/home/banner-closing.webp',
         $campaigns['light_studies']['image'] ?? null
     );
+
+    $homeResponsive = function (?string $url, int $width) {
+        if (!$url) return null;
+        $path = parse_url($url, PHP_URL_PATH) ?: '';
+        if (!str_starts_with($path, '/images/home/') || !str_ends_with($path, '.webp')) return null;
+        return asset(ltrim(preg_replace('/\.webp$/', '-'.$width.'.webp', $path), '/'));
+    };
+
+    $heroOne768 = $homeResponsive($heroSlides[0]['image'] ?? null, 768);
+    $heroOne1200 = $homeResponsive($heroSlides[0]['image'] ?? null, 1200);
 @endphp
+
+@if(!empty($heroSlides[0]['image']))
+    @push('head')
+        <link
+            rel="preload"
+            as="image"
+            href="{{ $heroOne768 ?: $heroSlides[0]['image'] }}"
+            @if($heroOne768)
+                imagesrcset="{{ $heroOne768 }} 768w, {{ $heroOne1200 }} 1200w, {{ $heroSlides[0]['image'] }} 1586w"
+                imagesizes="100vw"
+            @endif
+            fetchpriority="high"
+        >
+    @endpush
+@endif
 
 @section('title', 'Scents by Aamir — Fine Fragrance')
 @section('description', 'Modern fine fragrance shaped through atmosphere, material and memory.')
@@ -158,7 +183,7 @@
 
         @foreach($heroSlides as $index => $slide)
             <article
-                x-cloak
+                @if($index > 0) x-cloak @endif
                 x-show="active === {{ $index }}"
                 x-transition:enter="transition duration-700 ease-out"
                 x-transition:enter-start="opacity-0"
@@ -171,7 +196,12 @@
                 @if($slide['image'])
                     <img
                         src="{{ $slide['image'] }}"
+                        srcset="{{ $homeResponsive($slide['image'], 768) }} 768w, {{ $homeResponsive($slide['image'], 1200) }} 1200w, {{ $slide['image'] }} 1586w"
+                        sizes="100vw"
+                        width="1586"
+                        height="992"
                         alt="{{ $slide['title'] }} fragrance campaign"
+                        decoding="async"
                         class="absolute inset-0 h-full w-full object-cover object-center"
                         @if($index === 0)
                             fetchpriority="high"
@@ -352,6 +382,10 @@
             @if($storyImage)
                 <img
                     src="{{ $storyImage }}"
+                    srcset="{{ $homeResponsive($storyImage, 768) }} 768w, {{ $homeResponsive($storyImage, 1200) }} 1200w, {{ $storyImage }} 1600w"
+                    sizes="(max-width: 767px) 100vw, 60vw"
+                    width="1600"
+                    height="1000"
                     alt="Scents by Aamir house story"
                     class="absolute inset-0 h-full w-full object-cover"
                     loading="lazy"
@@ -375,6 +409,10 @@
                 @if($signatureImage)
                     <img
                         src="{{ $signatureImage }}"
+                    srcset="{{ $homeResponsive($signatureImage, 768) }} 768w, {{ $homeResponsive($signatureImage, 1200) }} 1200w, {{ $signatureImage }} 1600w"
+                    sizes="(max-width: 767px) 100vw, 60vw"
+                    width="1600"
+                    height="1000"
                         alt="Floral Charm editorial fragrance world"
                         class="absolute inset-0 h-full w-full object-cover"
                         loading="lazy"
@@ -406,6 +444,10 @@
                     @if($nocturnalImage)
                         <img
                             src="{{ $nocturnalImage }}"
+                            srcset="{{ $homeResponsive($nocturnalImage, 768) }} 768w, {{ $homeResponsive($nocturnalImage, 1200) }} 1200w, {{ $nocturnalImage }} 1600w"
+                            sizes="(max-width: 767px) 100vw, 60vw"
+                            width="1600"
+                            height="1000"
                             alt="Nocturnal fragrance world"
                             class="absolute inset-0 h-full w-full object-cover"
                             loading="lazy"
@@ -428,6 +470,10 @@
                     @if($finderImage)
                         <img
                             src="{{ $finderImage }}"
+                            srcset="{{ $homeResponsive($finderImage, 768) }} 768w, {{ $homeResponsive($finderImage, 1200) }} 1200w, {{ $finderImage }} 1600w"
+                            sizes="(max-width: 767px) 100vw, 60vw"
+                            width="1600"
+                            height="1000"
                             alt="Fragrance finder freshness study"
                             class="absolute inset-0 h-full w-full object-cover"
                             loading="lazy"
@@ -473,6 +519,10 @@
             @if($materialImage)
                 <img
                     src="{{ $materialImage }}"
+                    srcset="{{ $homeResponsive($materialImage, 768) }} 768w, {{ $homeResponsive($materialImage, 1200) }} 1200w, {{ $materialImage }} 1600w"
+                    sizes="(max-width: 767px) 100vw, 60vw"
+                    width="1600"
+                    height="1000"
                     alt="Scents by Aamir raw fragrance materials"
                     class="absolute inset-0 h-full w-full object-cover"
                     loading="lazy"
@@ -504,6 +554,10 @@
                 @if($journalImage)
                     <img
                         src="{{ $journalImage }}"
+                    srcset="{{ $homeResponsive($journalImage, 768) }} 768w, {{ $homeResponsive($journalImage, 1200) }} 1200w, {{ $journalImage }} 1600w"
+                    sizes="(max-width: 767px) 100vw, 60vw"
+                    width="1600"
+                    height="1000"
                         alt="Scents by Aamir perfume making journal study"
                         class="absolute inset-0 h-full w-full object-cover"
                         loading="lazy"
@@ -574,6 +628,10 @@
             @if($closingImage)
                 <img
                     src="{{ $closingImage }}"
+                    srcset="{{ $homeResponsive($closingImage, 768) }} 768w, {{ $homeResponsive($closingImage, 1200) }} 1200w, {{ $closingImage }} 1600w"
+                    sizes="(max-width: 767px) 100vw, 60vw"
+                    width="1600"
+                    height="1000"
                     alt="Scents by Aamir closing fragrance artwork"
                     class="absolute inset-0 h-full w-full object-contain object-center"
                     loading="lazy"

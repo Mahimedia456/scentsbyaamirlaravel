@@ -19,6 +19,15 @@
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="{{ config('storefront-seo.twitter_card') }}">
     <meta name="description" content="@yield('description', 'Scents by Aamir — modern fine fragrance.')">
+    {{-- Mobile performance: keep the external display font out of the mobile critical path. --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com" media="(min-width: 768px)">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin media="(min-width: 768px)">
+    <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap"
+        media="(min-width: 768px)"
+    >
+    @stack('head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>

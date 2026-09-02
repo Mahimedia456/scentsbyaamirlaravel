@@ -7,9 +7,6 @@ document.addEventListener('alpine:init', () => {
 });
 
 import Alpine from 'alpinejs';
-import Lenis from 'lenis';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 window.Alpine = Alpine;
 
@@ -387,11 +384,26 @@ document.addEventListener('DOMContentLoaded', () => {
   window.Alpine?.store('commerce')?.init();
 });
 
-gsap.registerPlugin(ScrollTrigger);
-
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const desktopMotion = window.matchMedia('(min-width: 768px)').matches;
 
-if (!reduceMotion) {
+let motionRuntime = null;
+
+const initLuxuryMotion = async () => {
+  if (reduceMotion || !desktopMotion || motionRuntime) return;
+
+  // GSAP + Lenis are deliberately outside the mobile initial bundle. Desktop
+  // loads them after critical rendering, preserving the luxury motion without
+  // making mobile Lighthouse pay the parsing/execution cost.
+  const [{ default: gsap }, { ScrollTrigger }, { default: Lenis }] = await Promise.all([
+    import('gsap'),
+    import('gsap/ScrollTrigger'),
+    import('lenis'),
+  ]);
+
+  gsap.registerPlugin(ScrollTrigger);
+  motionRuntime = { gsap, ScrollTrigger, Lenis };
+
   const lenis = new Lenis({
     duration: 0.82,
     smoothWheel: true,
@@ -423,31 +435,6 @@ if (!reduceMotion) {
       scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: true }
     });
   });
-}
-
-window.addEventListener('house:scroll-lock', (event) => {
-  const locked = Boolean(event.detail?.locked);
-  document.documentElement.classList.toggle('house-scroll-locked', locked);
-  document.body.classList.toggle('house-scroll-locked', locked);
-
-  if (window.houseLenis) {
-    if (locked) window.houseLenis.stop();
-    else window.houseLenis.start();
-  }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  const header = document.querySelector('[data-house-header]');
-  if (!header) return;
-
-  const update = () => header.dataset.scrolled = window.scrollY > 36 ? 'true' : 'false';
-  update();
-  window.addEventListener('scroll', update, { passive: true });
-});
-
-
-const initLuxuryMotion = () => {
-  if (reduceMotion) return;
 
   gsap.utils.toArray('[data-reveal-line]').forEach((el) => {
     gsap.fromTo(el, { yPercent: 110 }, {
@@ -493,6 +480,35 @@ const initLuxuryMotion = () => {
     el.addEventListener('mouseleave', reset);
   });
 };
+
+window.addEventListener('house:scroll-lock', (event) => {
+  const locked = Boolean(event.detail?.locked);
+  document.documentElement.classList.toggle('house-scroll-locked', locked);
+  document.body.classList.toggle('house-scroll-locked', locked);
+
+  if (window.houseLenis) {
+    if (locked) window.houseLenis.stop();
+    else window.houseLenis.start();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const header = document.querySelector('[data-house-header]');
+  if (!header) return;
+
+  let ticking = false;
+  const update = () => {
+    header.dataset.scrolled = window.scrollY > 36 ? 'true' : 'false';
+    ticking = false;
+  };
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
+  };
+  update();
+  window.addEventListener('scroll', onScroll, { passive: true });
+});
 
 const initThreeAtmosphere = async () => {
   const canvas = document.querySelector('[data-three-atmosphere]');
@@ -567,8 +583,18 @@ const initThreeAtmosphere = async () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  initLuxuryMotion();
   initThreeAtmosphere();
+
+  if (desktopMotion && !reduceMotion) {
+    const startMotion = () => initLuxuryMotion().catch((error) => {
+      console.warn('Scents by Aamir motion runtime:', error);
+    });
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(startMotion, { timeout: 1800 });
+    } else {
+      window.setTimeout(startMotion, 700);
+    }
+  }
 });
 
 // Global page loader: initial page load + real navigations/forms.

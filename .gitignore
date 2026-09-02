@@ -8,9 +8,9 @@
 /.idea
 /.vscode
 
-# Local deployment/archive files
-frontend.zip
 *.zip
-
-# Local archives
-*.zip
+*.rar
+*.7z
+*.sql
+*.dump
+*.bak

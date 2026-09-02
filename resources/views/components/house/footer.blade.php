@@ -6,6 +6,8 @@
                 <img
                     src="{{ asset('logo.png') }}"
                     alt="Scents by Aamir"
+                    width="560"
+                    height="131"
                     loading="lazy"
                     decoding="async"
                     class="mt-7 block h-auto w-full max-w-[560px] object-contain object-left brightness-0 invert"

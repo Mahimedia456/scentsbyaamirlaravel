@@ -3,6 +3,9 @@
         <img
             src="{{ asset('logo-02.png') }}"
             alt=""
+            width="298"
+            height="70"
+            decoding="async"
             class="house-page-loader__logo"
         >
         <div class="house-page-loader__line"><span></span></div>

@@ -1,0 +1,18 @@
+{
+  "base": "frontend(9).zip",
+  "purpose": "mobile PageSpeed/Lighthouse optimization",
+  "generated_home_variants": 18,
+  "generated_product_variants": 46,
+  "source_files_changed": [
+    ".gitignore",
+    "resources/css/app.css",
+    "resources/js/app.js",
+    "resources/views/layouts/store.blade.php",
+    "resources/views/store/home.blade.php",
+    "resources/views/components/house/product-card.blade.php",
+    "resources/views/components/house/page-loader.blade.php",
+    "resources/views/components/house/footer.blade.php",
+    "public/logo-02.png",
+    "public/logo.png"
+  ]
+}

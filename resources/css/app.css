@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -743,5 +742,21 @@ input[type="search"]::-webkit-search-cancel-button {
   }
   .sba-mega-secondary {
     gap: .45rem;
+  }
+}
+
+
+/* 2026-09 mobile PageSpeed pass */
+@media (max-width: 767px) {
+  .display-serif,
+  .menu-display-link,
+  .house-page-loader__mark {
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+
+  /* Touch devices do not need expensive hover transforms. */
+  [data-hover-tilt],
+  [data-image-shift] {
+    transform: none !important;
   }
 }
