@@ -67,17 +67,38 @@
                         <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:110px" name="story">{{ old('story',$product->story) }}</textarea>
                     </label>
 
+                    @php
+                        $displayNoteValue = static function ($value) {
+                            $value = trim((string) $value);
+
+                            if ($value === '') {
+                                return '';
+                            }
+
+                            $decoded = json_decode($value, true);
+
+                            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                return implode(', ', array_values(array_filter(array_map(
+                                    static fn ($note) => trim((string) $note),
+                                    $decoded
+                                ))));
+                            }
+
+                            return preg_replace('/\s*,\s*/u', ', ', $value) ?? $value;
+                        };
+                    @endphp
+
                     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
                         <label style="font-size:11px;font-weight:680">Top notes
-                            <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:120px" name="top_notes" placeholder="Bergamot, Ambroxan">{{ old('top_notes',$product->top_notes) }}</textarea>
+                            <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:120px" name="top_notes" placeholder="Bergamot, Ambroxan">{{ old('top_notes', $displayNoteValue($product->top_notes)) }}</textarea>
                         </label>
 
                         <label style="font-size:11px;font-weight:680">Heart notes
-                            <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:120px" name="heart_notes" placeholder="Woody Notes, Floral Accords">{{ old('heart_notes',$product->heart_notes) }}</textarea>
+                            <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:120px" name="heart_notes" placeholder="Woody Notes, Floral Accords">{{ old('heart_notes', $displayNoteValue($product->heart_notes)) }}</textarea>
                         </label>
 
                         <label style="font-size:11px;font-weight:680">Base notes
-                            <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:120px" name="base_notes" placeholder="Musk, Patchouli, Ambergris">{{ old('base_notes',$product->base_notes) }}</textarea>
+                            <textarea class="admin-field" style="margin-top:7px;padding-top:11px;min-height:120px" name="base_notes" placeholder="Musk, Patchouli, Ambergris">{{ old('base_notes', $displayNoteValue($product->base_notes)) }}</textarea>
                         </label>
                     </div>
 

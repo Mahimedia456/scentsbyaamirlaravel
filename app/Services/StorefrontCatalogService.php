@@ -540,8 +540,18 @@ class StorefrontCatalogService
             return null;
         }
 
+        $decoded = json_decode(trim($value), true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            $value = implode(', ', array_values(array_filter(array_map(
+                fn ($item) => trim((string) $item),
+                $decoded
+            ))));
+        }
+
         $text = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $text = preg_replace('/\s+/u', ' ', $text);
+        $text = preg_replace('/\s*,\s*/u', ', ', $text);
 
         return trim((string) $text);
     }

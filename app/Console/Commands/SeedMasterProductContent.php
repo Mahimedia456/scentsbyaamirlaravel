@@ -119,8 +119,16 @@ class SeedMasterProductContent extends Command
                         $value = $item[$column] ?? null;
 
                         if (in_array($column, ['top_notes', 'heart_notes', 'base_notes'], true)) {
-                            // Existing SBA schemas may use JSON, TEXT or VARCHAR. JSON is portable across all.
-                            $value = json_encode(array_values($value ?: []), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                            // Store fragrance notes as human-readable plain text in the DB.
+                            // Example: Bergamot, Black Pepper
+                            $value = is_array($value)
+                                ? implode(', ', array_values(array_filter(array_map(
+                                    fn ($note) => trim((string) $note),
+                                    $value
+                                ))))
+                                : $this->normalizeNoteValue($value);
+
+                            $value = $value !== '' ? $value : null;
                         }
 
                         $payload[$column] = $value;
@@ -143,6 +151,37 @@ class SeedMasterProductContent extends Command
         ));
 
         return self::SUCCESS;
+    }
+
+    private function normalizeNoteValue(mixed $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        if (is_array($value)) {
+            return implode(', ', array_values(array_filter(array_map(
+                fn ($note) => trim((string) $note),
+                $value
+            ))));
+        }
+
+        $text = trim((string) $value);
+
+        if ($text === '') {
+            return '';
+        }
+
+        $decoded = json_decode($text, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return implode(', ', array_values(array_filter(array_map(
+                fn ($note) => trim((string) $note),
+                $decoded
+            ))));
+        }
+
+        return trim(preg_replace('/\s*,\s*/u', ', ', $text) ?? $text);
     }
 
     private function backup(array $matches, array $available): void

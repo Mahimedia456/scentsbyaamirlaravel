@@ -7,3 +7,10 @@
 !.env.example
 /.idea
 /.vscode
+
+# Local deployment/archive files
+frontend.zip
+*.zip
+
+# Local archives
+*.zip

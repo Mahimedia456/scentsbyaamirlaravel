@@ -1,6 +1,0 @@
-PHP syntax: PASS
-Blade structure: PASS
-JS syntax: PASS
-notes layout restored left/right: PASS
-base stop Product Description: PASS
-base clean fallback Product Description: PASS

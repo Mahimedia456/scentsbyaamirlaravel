@@ -255,6 +255,10 @@ class ProductController extends Controller
         $data['stock'] = (int) ($data['stock'] ?? 0);
         $data['stock_quantity'] = $data['stock'];
 
+        foreach (['top_notes', 'heart_notes', 'base_notes'] as $noteField) {
+            $data[$noteField] = $this->normalizeNoteValue($data[$noteField] ?? null);
+        }
+
         $structuredNotes = collect([
             filled($data['top_notes'] ?? null) ? 'Top Notes: ' . trim((string) $data['top_notes']) : null,
             filled($data['heart_notes'] ?? null) ? 'Heart Notes: ' . trim((string) $data['heart_notes']) : null,
@@ -278,6 +282,34 @@ class ProductController extends Controller
         );
 
         return $data;
+    }
+
+
+    private function normalizeNoteValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $text = trim((string) $value);
+
+        if ($text === '') {
+            return null;
+        }
+
+        $decoded = json_decode($text, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            $text = implode(', ', array_values(array_filter(array_map(
+                fn ($note) => trim((string) $note),
+                $decoded
+            ))));
+        }
+
+        $text = preg_replace('/\s*,\s*/u', ', ', $text) ?? $text;
+        $text = trim($text, " \t\n\r\0\x0B,[]\"");
+
+        return $text !== '' ? $text : null;
     }
 
     private function syncRelations(Request $request, Product $product): void
