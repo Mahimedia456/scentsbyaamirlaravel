@@ -1,0 +1,17 @@
+{
+  "base": "frontend(9).zip",
+  "scope": "requested mobile/header/checkout/account/order/tracking/admin fulfilment fixes only",
+  "new_components": [
+    "resources/views/components/house/mobile-bottom-nav.blade.php",
+    "resources/views/components/house/cart-toast.blade.php"
+  ],
+  "migration": "database/migrations/2026_09_02_190000_add_shipping_partner_to_orders.php",
+  "guest_checkout": true,
+  "shipping_partners": [
+    "TCS",
+    "PostEx",
+    "Leopards",
+    "M&P",
+    "Other"
+  ]
+}

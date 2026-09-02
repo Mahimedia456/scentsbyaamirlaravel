@@ -7,6 +7,9 @@ document.addEventListener('alpine:init', () => {
 });
 
 import Alpine from 'alpinejs';
+import Lenis from 'lenis';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 window.Alpine = Alpine;
 
@@ -131,6 +134,9 @@ document.addEventListener('alpine:init', () => {
     cartOpen: false,
     syncing: false,
     notice: '',
+    toastOpen: false,
+    toastMessage: '',
+    toastTimer: null,
     storageVersion: commerceStorageVersion,
     initialized: false,
 
@@ -161,6 +167,15 @@ document.addEventListener('alpine:init', () => {
       return `fallback:${product.slug || 'product'}:${String(product.size || 'default').toLowerCase()}`;
     },
 
+    showToast(message) {
+      this.toastMessage = message;
+      this.toastOpen = true;
+      if (this.toastTimer) window.clearTimeout(this.toastTimer);
+      this.toastTimer = window.setTimeout(() => {
+        this.toastOpen = false;
+      }, 2600);
+    },
+
     addToCart(product) {
       const normalized = {
         ...product,
@@ -178,7 +193,7 @@ document.addEventListener('alpine:init', () => {
 
       if (normalized.available === false || stockLimit <= 0) {
         this.notice = 'This fragrance is currently unavailable.';
-        this.cartOpen = true;
+        this.showToast(this.notice);
         return;
       }
 
@@ -199,7 +214,7 @@ document.addEventListener('alpine:init', () => {
 
       this.notice = 'Added to your shopping bag.';
       this.persist();
-      this.cartOpen = true;
+      this.showToast(this.notice);
 
       // Cart must feel immediate. Server validation runs in the background and
       // never blocks the drawer from opening or the item from being stored.
@@ -344,6 +359,10 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    get wishlistCount() {
+      return this.wishlist.length;
+    },
+
     get count() {
       return this.cart.filter((item) => item.available !== false)
         .reduce((sum, item) => sum + Number(item.qty || 1), 0);
@@ -384,26 +403,11 @@ document.addEventListener('DOMContentLoaded', () => {
   window.Alpine?.store('commerce')?.init();
 });
 
+gsap.registerPlugin(ScrollTrigger);
+
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const desktopMotion = window.matchMedia('(min-width: 768px)').matches;
 
-let motionRuntime = null;
-
-const initLuxuryMotion = async () => {
-  if (reduceMotion || !desktopMotion || motionRuntime) return;
-
-  // GSAP + Lenis are deliberately outside the mobile initial bundle. Desktop
-  // loads them after critical rendering, preserving the luxury motion without
-  // making mobile Lighthouse pay the parsing/execution cost.
-  const [{ default: gsap }, { ScrollTrigger }, { default: Lenis }] = await Promise.all([
-    import('gsap'),
-    import('gsap/ScrollTrigger'),
-    import('lenis'),
-  ]);
-
-  gsap.registerPlugin(ScrollTrigger);
-  motionRuntime = { gsap, ScrollTrigger, Lenis };
-
+if (!reduceMotion) {
   const lenis = new Lenis({
     duration: 0.82,
     smoothWheel: true,
@@ -435,6 +439,31 @@ const initLuxuryMotion = async () => {
       scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: true }
     });
   });
+}
+
+window.addEventListener('house:scroll-lock', (event) => {
+  const locked = Boolean(event.detail?.locked);
+  document.documentElement.classList.toggle('house-scroll-locked', locked);
+  document.body.classList.toggle('house-scroll-locked', locked);
+
+  if (window.houseLenis) {
+    if (locked) window.houseLenis.stop();
+    else window.houseLenis.start();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const header = document.querySelector('[data-house-header]');
+  if (!header) return;
+
+  const update = () => header.dataset.scrolled = window.scrollY > 36 ? 'true' : 'false';
+  update();
+  window.addEventListener('scroll', update, { passive: true });
+});
+
+
+const initLuxuryMotion = () => {
+  if (reduceMotion) return;
 
   gsap.utils.toArray('[data-reveal-line]').forEach((el) => {
     gsap.fromTo(el, { yPercent: 110 }, {
@@ -480,35 +509,6 @@ const initLuxuryMotion = async () => {
     el.addEventListener('mouseleave', reset);
   });
 };
-
-window.addEventListener('house:scroll-lock', (event) => {
-  const locked = Boolean(event.detail?.locked);
-  document.documentElement.classList.toggle('house-scroll-locked', locked);
-  document.body.classList.toggle('house-scroll-locked', locked);
-
-  if (window.houseLenis) {
-    if (locked) window.houseLenis.stop();
-    else window.houseLenis.start();
-  }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  const header = document.querySelector('[data-house-header]');
-  if (!header) return;
-
-  let ticking = false;
-  const update = () => {
-    header.dataset.scrolled = window.scrollY > 36 ? 'true' : 'false';
-    ticking = false;
-  };
-  const onScroll = () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(update);
-  };
-  update();
-  window.addEventListener('scroll', onScroll, { passive: true });
-});
 
 const initThreeAtmosphere = async () => {
   const canvas = document.querySelector('[data-three-atmosphere]');
@@ -583,18 +583,8 @@ const initThreeAtmosphere = async () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  initLuxuryMotion();
   initThreeAtmosphere();
-
-  if (desktopMotion && !reduceMotion) {
-    const startMotion = () => initLuxuryMotion().catch((error) => {
-      console.warn('Scents by Aamir motion runtime:', error);
-    });
-    if ('requestIdleCallback' in window) {
-      window.requestIdleCallback(startMotion, { timeout: 1800 });
-    } else {
-      window.setTimeout(startMotion, 700);
-    }
-  }
 });
 
 // Global page loader: initial page load + real navigations/forms.

@@ -265,6 +265,7 @@ class OrderController extends Controller
             'payment_status'=>['required',Rule::in(['pending','paid','failed','refunded'])],
             'payment_method'=>['nullable','string','max:80'],
             'shipping_method'=>['nullable','string','max:120'],
+            'shipping_partner'=>['nullable',Rule::in(['TCS','PostEx','Leopards','M&P','Other'])],
             'tracking_number'=>['nullable','string','max:120'],
             'admin_notes'=>['nullable','string','max:3000'],
         ]);

@@ -8,7 +8,7 @@
     $address = $customer->addresses->firstWhere('is_default', true) ?? $customer->addresses->first();
 @endphp
 
-<section class="min-h-screen bg-[#f7f6f2] pt-[100px] text-black">
+<section class="min-h-screen overflow-x-hidden bg-[#f7f6f2] pt-[100px] text-black">
     <div class="border-b border-black/10 bg-white">
         <div class="house-container py-10 sm:py-14">
             <div class="flex flex-wrap items-end justify-between gap-6">
@@ -80,7 +80,7 @@
                                 <p class="mt-1 text-xs text-black/42">{{ optional($order->placed_at ?? $order->created_at)->format('d M Y') }} · {{ $order->items->sum('quantity') }} item(s)</p>
                             </div>
                             <span class="ui-label text-black/40">{{ ucfirst(str_replace('_',' ', $order->status ?? 'processing')) }}</span>
-                            <span class="text-sm">PKR {{ number_format((float)($order->total ?? 0)) }} →</span>
+                            <span class="text-sm">PKR {{ number_format((float)($order->grand_total ?? 0)) }} →</span>
                         </a>
                     @empty
                         <div class="py-10">

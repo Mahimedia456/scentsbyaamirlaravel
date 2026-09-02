@@ -88,7 +88,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-4 p-6">
                     <a href="{{ route('shop') }}" class="text-link">← Continue shopping</a>
                     <button type="button" @click="$store.commerce.validateCart()" class="text-link" :disabled="$store.commerce.syncing">
-                        <span x-text="$store.commerce.syncing ? 'Checking…' : 'Refresh bag'"></span>
+                        <span>Refresh bag</span>
                     </button>
                 </div>
             </div>
@@ -117,16 +117,15 @@
                     <span>PKR <span x-text="$store.commerce.subtotal.toLocaleString()"></span></span>
                 </div>
 
-                @auth('customer')
-                    <a href="{{ route('checkout') }}" class="btn-solid mt-7 w-full bg-white text-black hover:bg-[#d2bd98]" :class="$store.commerce.count===0 ? 'pointer-events-none opacity-40' : ''">
-                        Continue to checkout
-                    </a>
-                @else
-                    <a href="{{ route('customer.login', ['redirect' => route('checkout')]) }}" class="btn-solid mt-7 w-full bg-white text-black hover:bg-[#d2bd98]" :class="$store.commerce.count===0 ? 'pointer-events-none opacity-40' : ''">
-                        Sign in to checkout
-                    </a>
-                    <p class="mt-4 text-xs leading-5 text-white/38">Your bag is stored in this browser while you sign in or create an account.</p>
-                @endauth
+                <a href="{{ route('checkout') }}" class="btn-solid mt-7 w-full bg-white text-black hover:bg-[#d2bd98]" :class="$store.commerce.count===0 ? 'pointer-events-none opacity-40' : ''">
+                    Continue to checkout
+                </a>
+                @guest('customer')
+                    <p class="mt-4 text-xs leading-5 text-white/45">
+                        Guest checkout is available. Prefer your saved details?
+                        <a href="{{ route('customer.login', ['redirect' => route('checkout')]) }}" class="underline underline-offset-4">Sign in</a>.
+                    </p>
+                @endguest
 
                 <div class="mt-7 border-t border-white/15 pt-6">
                     <p class="text-xs leading-6 text-white/42">Current price and stock are checked again before the order is placed.</p>

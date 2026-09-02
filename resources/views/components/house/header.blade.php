@@ -51,7 +51,7 @@
                 href="{{ route('home') }}"
                 class="header-logo flex items-center justify-center overflow-hidden"
                 aria-label="Scents by Aamir home"
-                style="width:min(250px,46vw);height:50px;"
+                style="width:min(250px,40vw);height:50px;"
             >
                 <img
                     src="{{ asset('logo-02.png') }}"
@@ -63,16 +63,28 @@
                 >
             </a>
 
-            <div class="flex min-w-0 items-center justify-end gap-3 lg:gap-7">
-                <a href="{{ route('account') }}" class="ui-label hidden xl:block">Account</a>
-                <a href="{{ route('wishlist') }}" class="ui-label hidden md:block">Wishlist</a>
-                <a
-                    href="{{ route('cart') }}"
-                    class="house-header-action"
-                    aria-label="Open cart"
-                >
-                    Cart <span class="hidden sm:inline">(<span x-text="$store.commerce.count">0</span>)</span>
-                </a>
+            <div class="flex min-w-0 items-center justify-end">
+                <div class="flex items-center gap-1 md:hidden">
+                    <a href="{{ route('account') }}" class="grid h-10 w-9 place-items-center" aria-label="Account">
+                        <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>
+                    </a>
+                    <a href="{{ route('wishlist') }}" class="relative grid h-10 w-9 place-items-center" aria-label="Wishlist">
+                        <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20.8 4.6a5.4 5.4 0 0 0-7.6 0L12 5.8l-1.2-1.2a5.4 5.4 0 1 0-7.6 7.6L12 21l8.8-8.8a5.4 5.4 0 0 0 0-7.6Z"/></svg>
+                        <span x-show="$store.commerce.wishlistCount > 0" x-text="$store.commerce.wishlistCount" class="absolute right-0 top-0 grid min-h-[14px] min-w-[14px] place-items-center rounded-full bg-black px-1 text-[7px] leading-none text-white"></span>
+                    </a>
+                    <a href="{{ route('cart') }}" class="relative grid h-10 w-9 place-items-center" aria-label="Shopping bag">
+                        <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 8h14l1 13H4z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg>
+                        <span x-show="$store.commerce.count > 0" x-text="$store.commerce.count" class="absolute right-0 top-0 grid min-h-[14px] min-w-[14px] place-items-center rounded-full bg-black px-1 text-[7px] leading-none text-white"></span>
+                    </a>
+                </div>
+
+                <div class="hidden items-center gap-5 md:flex lg:gap-7">
+                    <a href="{{ route('account') }}" class="ui-label hidden xl:block">Account</a>
+                    <a href="{{ route('wishlist') }}" class="ui-label">Wishlist <span class="text-black/35">(<span x-text="$store.commerce.wishlistCount">0</span>)</span></a>
+                    <a href="{{ route('cart') }}" class="house-header-action" aria-label="Open cart">
+                        Cart (<span x-text="$store.commerce.count">0</span>)
+                    </a>
+                </div>
             </div>
         </div>
     </header>

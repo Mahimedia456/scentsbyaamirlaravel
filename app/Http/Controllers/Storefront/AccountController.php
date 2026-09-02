@@ -14,7 +14,7 @@ class AccountController extends Controller
         $customer = auth('customer')->user()->load('addresses');
         $recentOrders = $customer->orders()->with('items')->latest('placed_at')->latest()->take(3)->get();
         $orderCount = $customer->orders()->count();
-        $openOrderCount = $customer->orders()->whereNotIn('status', ['completed', 'cancelled', 'refunded'])->count();
+        $openOrderCount = $customer->orders()->whereNotIn('status', ['delivered', 'cancelled', 'refunded'])->count();
         $unreadNotifications = CustomerNotification::where('customer_id', $customer->id)->whereNull('read_at')->count();
 
         return view('store.account', compact(

@@ -27,6 +27,9 @@ Route::get('/journal/{slug}', [\App\Http\Controllers\Storefront\ContentControlle
 
 Route::view('/cart', 'store.cart')->name('cart');
 Route::view('/wishlist', 'store.wishlist')->name('wishlist');
+Route::get('/checkout', [\App\Http\Controllers\Storefront\CheckoutController::class, 'index'])->name('checkout');
+Route::post('/checkout', [\App\Http\Controllers\Storefront\CheckoutController::class, 'store'])->name('checkout.store');
+Route::get('/checkout/success/{order}', [\App\Http\Controllers\Storefront\CheckoutController::class, 'success'])->name('checkout.success');
 Route::get('/account/activate/{customer}', [\App\Http\Controllers\Storefront\CustomerActivationController::class, 'activate'])
     ->middleware(['signed','throttle:12,1'])
     ->name('customer.activate');
@@ -53,9 +56,6 @@ Route::middleware('customer')->group(function () {
     Route::get('/account/orders/{order}', [\App\Http\Controllers\Storefront\AccountController::class, 'order'])->name('orders.show');
     Route::get('/account/notifications', [\App\Http\Controllers\Storefront\AccountController::class, 'notifications'])->name('notifications');
     Route::post('/account/notifications/{notification}/read', [\App\Http\Controllers\Storefront\AccountController::class, 'readNotification'])->name('notifications.read');
-    Route::get('/checkout', [\App\Http\Controllers\Storefront\CheckoutController::class, 'index'])->name('checkout');
-    Route::post('/checkout', [\App\Http\Controllers\Storefront\CheckoutController::class, 'store'])->name('checkout.store');
-    Route::get('/checkout/success/{order}', [\App\Http\Controllers\Storefront\CheckoutController::class, 'success'])->name('checkout.success');
     Route::post('/account/logout', [\App\Http\Controllers\Storefront\CustomerAuthController::class, 'logout'])->name('customer.logout');
 });
 Route::get('/gifting', [StorefrontCatalogController::class, 'gifting'])->name('gifting');

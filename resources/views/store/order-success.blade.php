@@ -41,7 +41,14 @@ localStorage.removeItem('sba_cart');
         <div class="flex justify-between border-t border-black/10 pt-3 text-base"><span>Total</span><span>PKR {{ number_format((float)$order->grand_total) }}</span></div>
       </div>
       @if($order->gift_wrap)<div class="mt-6 border border-black/10 bg-[#f7f6f2] p-5 text-sm"><strong>Gift presentation included.</strong>@if($order->gift_message)<p class="mt-2 whitespace-pre-line text-black/55">{{ $order->gift_message }}</p>@endif</div>@endif
-      <div class="mt-9 flex flex-wrap gap-3"><a href="{{ route('orders') }}" class="btn-solid">View my orders</a><a href="{{ route('shop') }}" class="btn-outline">Continue shopping</a></div>
+      <div class="mt-9 flex flex-wrap gap-3">
+        @auth('customer')
+          <a href="{{ route('orders') }}" class="btn-solid">View my orders</a>
+        @else
+          <a href="{{ route('track-order') }}" class="btn-solid">Track this order</a>
+        @endauth
+        <a href="{{ route('shop') }}" class="btn-outline">Continue shopping</a>
+      </div>
     </div>
   </div>
 </section>

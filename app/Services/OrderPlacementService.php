@@ -25,11 +25,28 @@ class OrderPlacementService
         private readonly CustomerNotificationService $notifications,
         private readonly TransactionalMailService $mail,
     ) {}
-    public function place(Customer $customer, array $payload, ?UploadedFile $receipt = null): Order
+    public function place(?Customer $customer, array $payload, ?UploadedFile $receipt = null): Order
     {
-        $address = $customer->addresses()->where('is_default', true)->first() ?: $customer->addresses()->first();
-        if (!$address) {
-            throw ValidationException::withMessages(['address' => 'Please save a delivery address before placing your order.']);
+        $address = null;
+        $guest = null;
+
+        if ($customer) {
+            $address = $customer->addresses()->where('is_default', true)->first()
+                ?: $customer->addresses()->first();
+
+            if (!$address) {
+                throw ValidationException::withMessages([
+                    'address' => 'Please save a delivery address before placing your order.',
+                ]);
+            }
+        } else {
+            $guest = $payload['guest'] ?? null;
+
+            if (!is_array($guest) || empty($guest['email']) || empty($guest['phone']) || empty($guest['address_line_1']) || empty($guest['city'])) {
+                throw ValidationException::withMessages([
+                    'guest_email' => 'Complete your guest contact and delivery details before placing the order.',
+                ]);
+            }
         }
 
         $items = $payload['items'] ?? [];
@@ -60,7 +77,7 @@ class OrderPlacementService
         }
 
         try {
-            $order = DB::transaction(function () use ($customer, $payload, $address, $payment, $receiptPath) {
+            $order = DB::transaction(function () use ($customer, $payload, $address, $guest, $payment, $receiptPath) {
                 $shipping = ShippingZone::query()
                     ->whereKey($payload['shipping_zone_id'])
                     ->where('active', true)
@@ -162,7 +179,7 @@ class OrderPlacementService
                 $order = Order::create([
                     'order_number' => $this->orderNumber(),
                     'checkout_token' => $payload['checkout_token'] ?? null,
-                    'customer_id' => $customer->id,
+                    'customer_id' => $customer?->id,
                     'shipping_zone_id' => $shipping->id,
                     'status' => 'pending',
                     'payment_status' => 'pending',
@@ -177,11 +194,21 @@ class OrderPlacementService
                     'gift_wrap' => $giftWrap,
                     'gift_message' => $giftWrap ? ($payload['gift_message'] ?? null) : null,
                     'gift_sender_name' => $giftWrap ? ($payload['gift_sender_name'] ?? null) : null,
-                    'customer_name' => $customer->full_name,
-                    'customer_email' => $customer->email,
-                    'customer_phone' => $address->phone ?: $customer->phone,
-                    'shipping_address' => $this->addressSnapshot($address),
-                    'billing_address' => $this->addressSnapshot($address),
+                    'customer_name' => $customer
+                        ? $customer->full_name
+                        : trim(($guest['first_name'] ?? '').' '.($guest['last_name'] ?? '')),
+                    'customer_email' => $customer
+                        ? $customer->email
+                        : ($guest['email'] ?? null),
+                    'customer_phone' => $customer
+                        ? ($address->phone ?: $customer->phone)
+                        : ($guest['phone'] ?? null),
+                    'shipping_address' => $customer
+                        ? $this->addressSnapshot($address)
+                        : $this->guestAddressSnapshot($guest),
+                    'billing_address' => $customer
+                        ? $this->addressSnapshot($address)
+                        : $this->guestAddressSnapshot($guest),
                     'payment_method' => $payment->code,
                     'payment_reference' => $payment->code === 'bank_transfer' ? ($payload['payment_reference'] ?? null) : null,
                     'payment_receipt_path' => $payment->code === 'bank_transfer' ? $receiptPath : null,
@@ -235,15 +262,17 @@ class OrderPlacementService
                 if ($coupon && $discountTotal > 0) {
                     CouponUsage::create([
                         'coupon_id' => $coupon->id,
-                        'customer_id' => $customer->id,
+                        'customer_id' => $customer?->id,
                         'order_id' => $order->id,
                         'discount_amount' => $discountTotal,
                     ]);
                     $coupon->increment('used_count');
                 }
 
-                $customer->update(['last_order_at' => now()]);
-                $this->notifications->orderPlaced($order);
+                if ($customer) {
+                    $customer->update(['last_order_at' => now()]);
+                    $this->notifications->orderPlaced($order);
+                }
                 return $order->load('items');
             }, 3);
             $this->mail->order($order, 'placed');
@@ -268,6 +297,21 @@ class OrderPlacementService
             'region' => $address->region,
             'postal_code' => $address->postal_code,
             'country_code' => $address->country_code,
+        ];
+    }
+
+    private function guestAddressSnapshot(array $guest): array
+    {
+        return [
+            'first_name' => $guest['first_name'] ?? '',
+            'last_name' => $guest['last_name'] ?? null,
+            'phone' => $guest['phone'] ?? null,
+            'address_line_1' => $guest['address_line_1'] ?? '',
+            'address_line_2' => $guest['address_line_2'] ?? null,
+            'city' => $guest['city'] ?? '',
+            'region' => $guest['region'] ?? null,
+            'postal_code' => $guest['postal_code'] ?? null,
+            'country_code' => $guest['country_code'] ?? 'PK',
         ];
     }
 

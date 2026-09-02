@@ -191,6 +191,13 @@
         <div class="admin-eyebrow">Fulfilment workflow</div>
         <p class="admin-muted" style="font-size:10px;line-height:1.6">Status changes remain active and send matching customer transactional emails when SMTP is configured.</p>
 
+        @if($order->shipping_partner || $order->tracking_number)
+            <div style="margin-top:14px;padding:12px;border:1px solid #e4e7ec;background:#fafafa;display:grid;gap:5px">
+                @if($order->shipping_partner)<div style="font-size:10px"><strong>Courier:</strong> {{ $order->shipping_partner }}</div>@endif
+                @if($order->tracking_number)<div style="font-size:10px;word-break:break-all"><strong>Tracking:</strong> {{ $order->tracking_number }}</div>@endif
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('admin.orders.update',$order) }}" style="display:grid;gap:13px;margin-top:17px">
             @csrf
             @method('PUT')
@@ -217,6 +224,15 @@
 
             <label style="font-size:11px;font-weight:680">Shipping method
                 <input class="admin-field" style="margin-top:7px" name="shipping_method" value="{{ old('shipping_method',$order->shipping_method) }}">
+            </label>
+
+            <label style="font-size:11px;font-weight:680">Shipping partner
+                <select class="admin-field" style="margin-top:7px" name="shipping_partner">
+                    <option value="">Select courier</option>
+                    @foreach(['TCS','PostEx','Leopards','M&P','Other'] as $partner)
+                        <option value="{{ $partner }}" @selected(old('shipping_partner',$order->shipping_partner)===$partner)>{{ $partner }}</option>
+                    @endforeach
+                </select>
             </label>
 
             <label style="font-size:11px;font-weight:680">Tracking number
