@@ -156,77 +156,8 @@
 @section('content')
 
 {{-- HERO --}}
-{{--
-    Mobile performance path: render the first campaign as plain HTML with no
-    Alpine visibility/timer dependency so Lighthouse can discover and paint the
-    LCP image immediately. Desktop keeps the full luxury carousel below.
---}}
-<section class="sba-home-hero relative overflow-hidden bg-black text-white md:hidden">
-    <div class="relative min-h-[700px] pt-[102px]">
-        @php($mobileHero = $heroSlides[0])
-        <article class="absolute inset-x-0 bottom-0 top-[102px]">
-            @if($mobileHero['image'])
-                <img
-                    src="{{ $heroOne768 ?: $mobileHero['image'] }}"
-                    srcset="{{ $homeResponsive($mobileHero['image'], 768) }} 768w, {{ $homeResponsive($mobileHero['image'], 1200) }} 1200w, {{ $mobileHero['image'] }} 1586w"
-                    sizes="100vw"
-                    width="1586"
-                    height="992"
-                    alt="{{ $mobileHero['title'] }} fragrance campaign"
-                    fetchpriority="high"
-                    decoding="async"
-                    class="absolute inset-0 h-full w-full object-cover object-center"
-                >
-            @endif
-
-            <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,.90)_0%,rgba(0,0,0,.70)_30%,rgba(0,0,0,.30)_50%,rgba(0,0,0,.10)_70%,rgba(0,0,0,.34)_100%)]"></div>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/68 via-transparent to-black/15"></div>
-
-            <div class="house-container relative flex h-full items-end pb-24 pt-16">
-                <div class="max-w-[650px]">
-                    <div class="flex items-center gap-4">
-                        <span class="h-px w-10 bg-[#c9ad7a]"></span>
-                        <p class="ui-label text-white/58">{{ $mobileHero['eyebrow'] }}</p>
-                    </div>
-
-                    <h1 class="mt-6 max-w-[650px] display-serif text-[44px] leading-[.94] tracking-[-.035em]">
-                        {{ $mobileHero['title'] }}
-                    </h1>
-
-                    <p class="mt-5 max-w-[560px] display-serif text-[22px] leading-tight italic text-[#d6c19a]">
-                        {{ $mobileHero['line'] }}
-                    </p>
-
-                    <p class="mt-5 max-w-lg text-[14px] leading-7 text-white/66">
-                        {{ $mobileHero['copy'] }}
-                    </p>
-
-                    <div class="mt-8 flex flex-wrap gap-3">
-                        @if($mobileHero['slug'])
-                            <a href="{{ route('product.show', $mobileHero['slug']) }}" class="btn-solid bg-white text-black hover:bg-[#d2bd98]">
-                                Discover fragrance
-                            </a>
-                        @else
-                            <a href="{{ route('shop') }}" class="btn-solid bg-white text-black hover:bg-[#d2bd98]">Shop fragrances</a>
-                        @endif
-                        <a href="{{ route('finder') }}" class="btn-outline border-white/35 text-white hover:bg-white hover:text-black">Find your scent</a>
-                    </div>
-                </div>
-            </div>
-        </article>
-
-        <div class="house-container absolute inset-x-0 bottom-7 z-20">
-            <div class="flex items-center gap-2">
-                <span class="ui-label text-white/55">{{ $mobileHero['number'] }}</span>
-                <span class="h-px w-12 bg-white"></span>
-            </div>
-        </div>
-    </div>
-</section>
-
-{{-- Desktop/tablet luxury carousel --}}
 <section
-    class="sba-home-hero relative hidden overflow-hidden bg-black text-white md:block"
+    class="sba-home-hero relative overflow-hidden bg-black text-white"
     x-data="{
         active: 0,
         total: {{ count($heroSlides) }},
@@ -248,7 +179,8 @@
     @mouseenter="stop()"
     @mouseleave="start()"
 >
-    <div class="relative min-h-[760px] pt-[108px] lg:min-h-[820px]">
+    <div class="relative min-h-[700px] pt-[102px] sm:min-h-[760px] sm:pt-[108px] lg:min-h-[820px]">
+
         @foreach($heroSlides as $index => $slide)
             <article
                 @if($index > 0) x-cloak @endif
@@ -259,7 +191,7 @@
                 x-transition:leave="transition duration-500 ease-in"
                 x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0"
-                class="absolute inset-x-0 bottom-0 top-[108px]"
+                class="absolute inset-x-0 bottom-0 top-[102px] sm:top-[108px]"
             >
                 @if($slide['image'])
                     <img
@@ -271,42 +203,98 @@
                         alt="{{ $slide['title'] }} fragrance campaign"
                         decoding="async"
                         class="absolute inset-0 h-full w-full object-cover object-center"
-                        @if($index === 0) fetchpriority="high" @else loading="lazy" @endif
+                        @if($index === 0)
+                            fetchpriority="high"
+                        @else
+                            loading="lazy"
+                        @endif
                     >
                 @endif
+
                 <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,.90)_0%,rgba(0,0,0,.70)_30%,rgba(0,0,0,.30)_50%,rgba(0,0,0,.10)_70%,rgba(0,0,0,.34)_100%)]"></div>
                 <div class="absolute inset-0 bg-gradient-to-t from-black/68 via-transparent to-black/15"></div>
-                <div class="house-container relative flex h-full items-end pb-28 pt-16 lg:items-center lg:pb-10">
+
+                <div class="house-container relative flex h-full items-end pb-24 pt-16 sm:pb-28 lg:items-center lg:pb-10">
                     <div class="max-w-[650px]" data-reveal>
-                        <div class="flex items-center gap-4"><span class="h-px w-10 bg-[#c9ad7a]"></span><p class="ui-label text-white/58">{{ $slide['eyebrow'] }}</p></div>
-                        <h1 class="mt-6 max-w-[650px] display-serif text-[54px] leading-[.94] tracking-[-.035em] lg:text-[66px] xl:text-[76px]">{{ $slide['title'] }}</h1>
-                        <p class="mt-5 max-w-[560px] display-serif text-[28px] leading-tight italic text-[#d6c19a]">{{ $slide['line'] }}</p>
-                        <p class="mt-5 max-w-lg text-[14px] leading-7 text-white/66">{{ $slide['copy'] }}</p>
+                        <div class="flex items-center gap-4">
+                            <span class="h-px w-10 bg-[#c9ad7a]"></span>
+                            <p class="ui-label text-white/58">{{ $slide['eyebrow'] }}</p>
+                        </div>
+
+                        <h1 class="mt-6 max-w-[650px] display-serif text-[44px] leading-[.94] tracking-[-.035em] sm:text-[54px] lg:text-[66px] xl:text-[76px]">
+                            {{ $slide['title'] }}
+                        </h1>
+
+                        <p class="mt-5 max-w-[560px] display-serif text-[22px] leading-tight italic text-[#d6c19a] sm:text-[28px]">
+                            {{ $slide['line'] }}
+                        </p>
+
+                        <p class="mt-5 max-w-lg text-[14px] leading-7 text-white/66">
+                            {{ $slide['copy'] }}
+                        </p>
+
                         <div class="mt-8 flex flex-wrap gap-3">
                             @if($slide['slug'])
-                                <a href="{{ route('product.show', $slide['slug']) }}" class="btn-solid bg-white text-black hover:bg-[#d2bd98]">Discover fragrance</a>
+                                <a
+                                    href="{{ route('product.show', $slide['slug']) }}"
+                                    class="btn-solid bg-white text-black hover:bg-[#d2bd98]"
+                                >
+                                    Discover fragrance
+                                </a>
                             @else
-                                <a href="{{ route('shop') }}" class="btn-solid bg-white text-black hover:bg-[#d2bd98]">Shop fragrances</a>
+                                <a href="{{ route('shop') }}" class="btn-solid bg-white text-black hover:bg-[#d2bd98]">
+                                    Shop fragrances
+                                </a>
                             @endif
-                            <a href="{{ route('finder') }}" class="btn-outline border-white/35 text-white hover:bg-white hover:text-black">Find your scent</a>
+
+                            <a
+                                href="{{ route('finder') }}"
+                                class="btn-outline border-white/35 text-white hover:bg-white hover:text-black"
+                            >
+                                Find your scent
+                            </a>
                         </div>
                     </div>
                 </div>
             </article>
         @endforeach
 
-        <div class="house-container absolute inset-x-0 bottom-9 z-20 flex items-center justify-between gap-5">
+        <div class="house-container absolute inset-x-0 bottom-7 z-20 flex items-center justify-between gap-5 sm:bottom-9">
             <div class="flex items-center gap-3">
                 @foreach($heroSlides as $index => $slide)
-                    <button type="button" @click="active = {{ $index }}; start()" class="group flex items-center gap-2" aria-label="Show hero {{ $index + 1 }}">
+                    <button
+                        type="button"
+                        @click="active = {{ $index }}; start()"
+                        class="group flex items-center gap-2"
+                        aria-label="Show hero {{ $index + 1 }}"
+                    >
                         <span class="ui-label text-white/55">{{ $slide['number'] }}</span>
-                        <span class="h-px transition-all duration-300" :class="active === {{ $index }} ? 'w-12 bg-white' : 'w-5 bg-white/30 group-hover:bg-white/60'"></span>
+                        <span
+                            class="h-px transition-all duration-300"
+                            :class="active === {{ $index }} ? 'w-12 bg-white' : 'w-5 bg-white/30 group-hover:bg-white/60'"
+                        ></span>
                     </button>
                 @endforeach
             </div>
-            <div class="flex items-center gap-2">
-                <button type="button" @click="active = (active - 1 + total) % total; start()" class="sba-hero-arrow" aria-label="Previous hero">←</button>
-                <button type="button" @click="active = (active + 1) % total; start()" class="sba-hero-arrow" aria-label="Next hero">→</button>
+
+            <div class="hidden items-center gap-2 sm:flex">
+                <button
+                    type="button"
+                    @click="active = (active - 1 + total) % total; start()"
+                    class="sba-hero-arrow"
+                    aria-label="Previous hero"
+                >
+                    ←
+                </button>
+
+                <button
+                    type="button"
+                    @click="active = (active + 1) % total; start()"
+                    class="sba-hero-arrow"
+                    aria-label="Next hero"
+                >
+                    →
+                </button>
             </div>
         </div>
     </div>
