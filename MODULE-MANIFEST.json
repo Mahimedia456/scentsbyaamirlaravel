@@ -1,0 +1,16 @@
+{
+  "module": "Scents by Aamir WordPress Journal Import",
+  "baseline": "ScentsByAamir_TARGETED_BUGFIX_FINAL.zip",
+  "wordpress_source_default": "https://scentsbyaamir.com",
+  "import": {
+    "posts": true,
+    "featured_images": true,
+    "inline_images": true,
+    "author": true,
+    "categories": true,
+    "tags": true,
+    "yoast_seo_when_exposed": true,
+    "duplicate_key": "wordpress_id"
+  },
+  "runtime_dependency_on_wordpress": false
+}

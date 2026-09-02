@@ -158,6 +158,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/content', \App\Http\Controllers\Admin\ContentDashboardController::class)->name('content.index');
         Route::post('/pages/{page}/duplicate', [\App\Http\Controllers\Admin\PageController::class, 'duplicate'])->name('pages.duplicate');
         Route::resource('pages', \App\Http\Controllers\Admin\PageController::class)->except('show');
+        Route::get('/journal-import', [\App\Http\Controllers\Admin\JournalImportController::class, 'index'])->name('journal-import.index');
+        Route::post('/journal-import', [\App\Http\Controllers\Admin\JournalImportController::class, 'run'])->name('journal-import.run');
         Route::post('/journal-posts/{journal_post}/duplicate', [\App\Http\Controllers\Admin\JournalPostController::class, 'duplicate'])->name('journal-posts.duplicate');
         Route::resource('journal-posts', \App\Http\Controllers\Admin\JournalPostController::class)->except('show');
         Route::resource('navigations', \App\Http\Controllers\Admin\NavigationController::class)->except('show');
