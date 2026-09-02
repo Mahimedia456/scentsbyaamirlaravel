@@ -1,0 +1,26 @@
+SCENTS BY AAMIR — OFFICIAL GALLERY + 3 NOTE IMAGES QA
+
+PHP files linted: 142
+PHP failures: 0
+PASS
+
+Blade files scanned: 100
+Blade structural mismatches: 0
+PASS
+
+JavaScript:
+resources/js/app.js: PASS 
+resources/js/admin.js: PASS 
+
+Regression checks:
+- top shopping gallery no longer contains notes.webp
+- top shopping gallery no longer contains world.webp
+- top shopping gallery no longer contains story.webp
+- hero.webp is first when present
+- imported/official product gallery follows hero.webp
+- top-notes.webp dedicated image supported
+- heart-notes.webp dedicated image supported
+- base-notes.webp dedicated image supported
+- old notes.webp only temporary fallback
+- world.webp remains editorial banner
+- story.webp remains ritual/story banner

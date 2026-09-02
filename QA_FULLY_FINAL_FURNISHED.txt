@@ -1,0 +1,26 @@
+SCENTS BY AAMIR — FULLY FINAL FURNISHED STATIC QA
+
+PHP files linted: 145
+PHP syntax failures: 0
+PASS
+
+Blade files scanned: 103
+Blade structural mismatches: 0
+PASS
+
+JavaScript:
+resources/js/app.js: PASS 
+resources/js/admin.js: PASS 
+
+Assertions:
+customer.password.request: PASS
+customer.password.email: PASS
+customer.password.reset: PASS
+customer.password.update: PASS
+customers broker: PASS
+loader defaultPrevented: PASS
+header no loader: PASS
+note resolver: PASS
+
+Note: live SMTP delivery cannot be validated without the real production mailbox password/network.
+The code paths and config diagnostics are included; use storefront:mail-check --to=...

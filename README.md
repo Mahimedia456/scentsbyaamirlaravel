@@ -1,50 +1,82 @@
-# Scents by Aamir — Fresh Laravel Frontend Restart Phase 01
+# ScentsByAamir Curated SEO Master Content — 26 Products
 
-This is a NEW clean storefront checkpoint. Do not merge it with the rejected old Phase 01–04 design.
+This package contains curated master storefront copy for 26 Scents by Aamir products:
+- 23 normal fragrances
+- 3 tester/discovery boxes
 
-## Included
-- Laravel 12 / PHP 8.3
-- Tailwind 3.4
-- Alpine.js
-- Lenis
-- GSAP / Three.js dependencies prepared
-- bootstrap/cache directory fix
-- campaign-style announcement bar
-- transparent-over-hero utility header
-- slide-out mega navigation
-- search strip
-- modern home page
-- full catalogue page `/shop`
-- filter drawer
-- sorting
-- product grid
-- large service footer
-- mobile responsive structure
+The Artisan command updates **content/SEO columns only**. It does not update price, sale price, stock, SKU, slug, product name, images, category, variants, inventory or other commerce data.
 
-## Design
-The project uses luxury fragrance/fashion ecommerce references for layout principles only. Branding, copy, components and product worlds are original to Scents by Aamir.
+## Copy / merge into Laravel
 
-## Manual install
+Extract this ZIP into:
+
+`E:\ScentsByAamirLaravel\frontend`
+
+Allow the two package files to merge into:
+- `app/Console/Commands/SeedMasterProductContent.php`
+- `config/master_product_content.php`
+
+Laravel 12 auto-discovers commands in `app/Console/Commands`.
+
+## Local database — recommended safe sequence
+
+From PowerShell:
 
 ```powershell
 cd E:\ScentsByAamirLaravel\frontend
-composer install
-Copy-Item .env.example .env
-php artisan key:generate
-npm install
+
+composer dump-autoload
+php artisan optimize:clear
+
+php artisan list | Select-String "seed-master-product-content"
+
+# 1) Verify matching only — NO database change
+php artisan storefront:seed-master-product-content --dry-run --strict
+
+# 2) Apply locally and first create a JSON backup
+php artisan storefront:seed-master-product-content --strict --backup
+
+# 3) Clear runtime caches
+php artisan optimize:clear
 ```
 
-Terminal 1:
+Expected result:
+`Master content applied to 26 product(s).`
+
+If strict dry-run reports a missing product, do not run the write command until that mismatch is checked.
+
+## Production/server database
+
+After these files are committed/pushed and your production source is updated:
+
+```bash
+cd /home/sites/41b/8/81d92349b7/public_html/shop/laravel12
+
+/usr/php84/usr/bin/php artisan optimize:clear
+
+# Verify production matching first
+/usr/php84/usr/bin/php artisan storefront:seed-master-product-content --dry-run --strict
+
+# Apply to production DB with a JSON backup
+/usr/php84/usr/bin/php artisan storefront:seed-master-product-content --strict --backup
+
+/usr/php84/usr/bin/php artisan optimize:clear
+```
+
+The backup is written under:
+`storage/app/master-content-backups/`
+
+## One-line SSH production command from Windows
+
 ```powershell
-npm run dev
+ssh -o IdentitiesOnly=yes -i "C:\Users\hp\.ssh\scentsbyaamir_github_actions_nopass" scentsbyaamir.com@ssh.gb.stackcp.com "cd /home/sites/41b/8/81d92349b7/public_html/shop/laravel12 && /usr/php84/usr/bin/php artisan optimize:clear && /usr/php84/usr/bin/php artisan storefront:seed-master-product-content --dry-run --strict && /usr/php84/usr/bin/php artisan storefront:seed-master-product-content --strict --backup && /usr/php84/usr/bin/php artisan optimize:clear"
 ```
 
-Terminal 2:
-```powershell
-php artisan serve
-```
+## Important behavior
 
-Open:
-http://127.0.0.1:8000
+The command dynamically checks which of these columns exist:
+`subtitle`, `short_description`, `description`, `story`, `top_notes`, `heart_notes`, `base_notes`, `wear`, `notes`, `meta_title`, `meta_description`.
 
-If `.env` already exists, do not overwrite it.
+It only writes columns that actually exist on your `products` table.
+
+Tester boxes intentionally receive no fabricated fragrance-note pyramid. Their top/heart/base arrays are empty because a tester box contains multiple scents rather than one composition.

@@ -1,0 +1,22 @@
+SCENTS BY AAMIR — FINAL CART / MAIL / NOTES / MATERIALS QA
+
+PHP files linted: 145
+PHP syntax failures: 0
+
+Blade files scanned: 103
+Blade structural mismatches: 0
+
+JavaScript:
+resources/js/app.js: PASS
+resources/js/admin.js: PASS
+
+Assertions:
+mail tls normalization: PASS
+header cart normal navigation: PASS
+base note stop labels: PASS
+product study section: PASS
+admin email status updated: PASS
+
+Important:
+A real SMTP inbox delivery test still depends on the mailbox credentials/network,
+but the prior unsupported `tls` scheme failure is fixed in config/mail.php.

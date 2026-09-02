@@ -1,0 +1,23 @@
+SCENTS BY AAMIR — FINAL PDP / STOCK / PROMPTS QA
+
+PHP files linted: 142
+PHP failures: 0
+PASS
+
+Blade files scanned: 100
+Blade structural mismatches: 0
+PASS
+
+JavaScript:
+resources/js/app.js: PASS 
+resources/js/admin.js: PASS 
+
+Regression checks:
+- normal simple perfume runtime availability: forced available
+- normal simple perfume display size: 50 ML
+- tester availability remains explicit
+- cart validates same normal simple product rule
+- checkout validates same normal simple product rule
+- 4 exact product-specific gallery files supported
+- stable dummy rating/reviews/sold values included
+- exact DB-driven prompt exporter command included

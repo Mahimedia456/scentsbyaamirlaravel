@@ -1,0 +1,30 @@
+SCENTS BY AAMIR — LOCAL + PRODUCTION MASTER CONTENT COMMANDS
+
+LOCAL
+=====
+cd E:\ScentsByAamirLaravel\frontend
+composer dump-autoload
+php artisan optimize:clear
+php artisan storefront:seed-master-product-content --dry-run --strict
+php artisan storefront:seed-master-product-content --strict --backup
+php artisan optimize:clear
+
+PRODUCTION
+==========
+cd /home/sites/41b/8/81d92349b7/public_html/shop/laravel12
+/usr/php84/usr/bin/php artisan optimize:clear
+/usr/php84/usr/bin/php artisan storefront:seed-master-product-content --dry-run --strict
+/usr/php84/usr/bin/php artisan storefront:seed-master-product-content --strict --backup
+/usr/php84/usr/bin/php artisan optimize:clear
+
+EXPECTED WRITE RESULT
+=====================
+Master content applied to 26 product(s).
+
+SAFETY
+======
+--dry-run = verification only
+--strict  = abort if any configured product is missing
+--backup  = JSON snapshot before overwrite
+
+The command does not modify price, stock, SKU, slug, images, category, variants or inventory.

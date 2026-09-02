@@ -1,0 +1,7 @@
+PHP syntax: PASS
+Blade structure: PASS
+JS syntax: PASS
+parsed base notes before world: PASS
+base stop Materials & Care: PASS
+centered fragrance content: PASS
+centered product study: PASS

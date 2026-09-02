@@ -4,11 +4,21 @@ namespace App\Services;
 
 class ProductContentParser
 {
-    public function parse(?string $rawDescription, ?string $legacyNotes = null): array
-    {
+    public function parse(
+        ?string $rawDescription,
+        ?string $legacyNotes = null,
+        ?string $existingStory = null,
+        ?string $existingWear = null
+    ): array {
         $descriptionSource = $this->normalize($rawDescription);
         $notesSource = $this->normalize($legacyNotes);
-        $combined = trim(implode(' ', array_filter([$notesSource, $descriptionSource])));
+        $storySource = $this->normalize($existingStory);
+        $wearSource = $this->normalize($existingWear);
+
+        $combined = trim(implode(' ', array_filter([
+            $notesSource,
+            $descriptionSource,
+        ])));
 
         $metadataStops = [
             'Longevity',
@@ -28,32 +38,71 @@ class ProductContentParser
             'Story',
         ];
 
-        $top = $this->extract($combined, 'Top Notes', array_merge(['Heart Notes', 'Base Notes'], $metadataStops));
-        $heart = $this->extract($combined, 'Heart Notes', array_merge(['Base Notes'], $metadataStops));
-        $base = $this->extract($combined, 'Base Notes', $metadataStops);
+        $topNotes = $this->extract(
+            $combined,
+            'Top Notes',
+            array_merge(['Heart Notes', 'Middle Notes', 'Base Notes'], $metadataStops)
+        );
 
-        $description = $this->extract($descriptionSource, 'Product Description', [
-            'Materials & Care',
-            'Materials and Care',
-            'Care',
-            'Packaging',
-        ]);
+        $heartNotes = $this->extractFirstAvailable(
+            $combined,
+            ['Heart Notes', 'Middle Notes'],
+            array_merge(['Base Notes'], $metadataStops)
+        );
 
-        if (!$description) {
-            $description = $this->stripNoteAndMetadataSections($descriptionSource);
+        $baseNotes = $this->extract(
+            $combined,
+            'Base Notes',
+            $metadataStops
+        );
+
+        $productDescription = $this->extract(
+            $descriptionSource,
+            'Product Description',
+            [
+                'Materials & Care',
+                'Materials and Care',
+                'Care',
+                'Packaging',
+            ]
+        );
+
+        if (!$productDescription) {
+            $productDescription = $this->stripStructuredSections($descriptionSource);
         }
 
+        $story = $storySource !== ''
+            ? $storySource
+            : $this->firstSentences(
+                $productDescription ?: $descriptionSource,
+                3,
+                520
+            );
+
+        $wear = $wearSource !== ''
+            ? $wearSource
+            : $this->buildWearFromSource($descriptionSource);
+
         return [
-            'top_notes' => $this->clean($top),
-            'heart_notes' => $this->clean($heart),
-            'base_notes' => $this->clean($base),
-            'description' => $this->clean($description),
-            'notes_summary' => $this->summary($top, $heart, $base),
+            'top_notes' => $this->clean($topNotes),
+            'heart_notes' => $this->clean($heartNotes),
+            'base_notes' => $this->clean($baseNotes),
+            'description' => $this->clean($productDescription),
+            'story' => $this->clean($story),
+            'wear' => $this->clean($wear),
+            'notes_summary' => $this->notesSummary(
+                $topNotes,
+                $heartNotes,
+                $baseNotes
+            ),
         ];
     }
 
-    private function extract(string $source, string $label, array $stops): ?string
-    {
+    private function extract(
+        string $source,
+        string $label,
+        array $stops
+    ): ?string {
         if ($source === '') {
             return null;
         }
@@ -80,7 +129,23 @@ class ProductContentParser
         return $this->clean($match[1]);
     }
 
-    private function stripNoteAndMetadataSections(string $source): ?string
+    private function extractFirstAvailable(
+        string $source,
+        array $labels,
+        array $stops
+    ): ?string {
+        foreach ($labels as $label) {
+            $value = $this->extract($source, $label, $stops);
+
+            if (filled($value)) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    private function stripStructuredSections(string $source): ?string
     {
         if ($source === '') {
             return null;
@@ -89,9 +154,63 @@ class ProductContentParser
         $clean = $source;
 
         foreach ([
-            ['Top Notes', ['Heart Notes', 'Base Notes', 'Product Description', 'Longevity', 'Occasion', 'Why Choose', 'Materials & Care', 'Materials and Care', 'Care', 'Packaging']],
-            ['Heart Notes', ['Base Notes', 'Product Description', 'Longevity', 'Occasion', 'Why Choose', 'Materials & Care', 'Materials and Care', 'Care', 'Packaging']],
-            ['Base Notes', ['Product Description', 'Longevity', 'Occasion', 'Why Choose', 'Materials & Care', 'Materials and Care', 'Care', 'Packaging']],
+            [
+                'Top Notes',
+                [
+                    'Heart Notes',
+                    'Middle Notes',
+                    'Base Notes',
+                    'Product Description',
+                    'Longevity',
+                    'Occasion',
+                    'Why Choose',
+                    'Materials & Care',
+                    'Materials and Care',
+                    'Care',
+                    'Packaging',
+                ],
+            ],
+            [
+                'Heart Notes',
+                [
+                    'Base Notes',
+                    'Product Description',
+                    'Longevity',
+                    'Occasion',
+                    'Why Choose',
+                    'Materials & Care',
+                    'Materials and Care',
+                    'Care',
+                    'Packaging',
+                ],
+            ],
+            [
+                'Middle Notes',
+                [
+                    'Base Notes',
+                    'Product Description',
+                    'Longevity',
+                    'Occasion',
+                    'Why Choose',
+                    'Materials & Care',
+                    'Materials and Care',
+                    'Care',
+                    'Packaging',
+                ],
+            ],
+            [
+                'Base Notes',
+                [
+                    'Product Description',
+                    'Longevity',
+                    'Occasion',
+                    'Why Choose',
+                    'Materials & Care',
+                    'Materials and Care',
+                    'Care',
+                    'Packaging',
+                ],
+            ],
         ] as [$label, $stops]) {
             $alternation = implode('|', array_map(
                 static fn (string $stop) => preg_quote($stop, '/'),
@@ -99,13 +218,15 @@ class ProductContentParser
             ));
 
             $clean = preg_replace(
-                '/' . preg_quote($label, '/') . '\s*:?\s*.+?(?=\s*(?:' . $alternation . ')\s*:?\s*|$)/is',
+                '/' . preg_quote($label, '/')
+                . '\s*:?\s*.+?(?=\s*(?:'
+                . $alternation
+                . ')\s*:?\s*|$)/is',
                 ' ',
                 $clean
             ) ?? $clean;
         }
 
-        // Keep actual body text, remove only labels/metadata headings.
         $clean = preg_replace(
             '/\b(?:Product Description|Features|Longevity|Occasion|Why Choose(?: This)?|Materials?\s*(?:&|and)?\s*Care|Care|Packaging|Discover|Content)\b\s*:?\s*/i',
             ' ',
@@ -115,8 +236,83 @@ class ProductContentParser
         return $this->clean($clean);
     }
 
-    private function summary(?string $top, ?string $heart, ?string $base): ?string
+    private function buildWearFromSource(string $source): ?string
     {
+        if ($source === '') {
+            return null;
+        }
+
+        $occasion = $this->extract(
+            $source,
+            'Occasion',
+            [
+                'Why Choose',
+                'Materials & Care',
+                'Materials and Care',
+                'Care',
+                'Packaging',
+                'Product Description',
+            ]
+        );
+
+        $longevity = $this->extract(
+            $source,
+            'Longevity',
+            [
+                'Occasion',
+                'Why Choose',
+                'Materials & Care',
+                'Materials and Care',
+                'Care',
+                'Packaging',
+                'Product Description',
+            ]
+        );
+
+        $parts = [];
+
+        if ($occasion) {
+            $parts[] = 'Best worn: ' . rtrim($occasion, '.') . '.';
+        }
+
+        if ($longevity) {
+            $parts[] = 'Longevity: ' . rtrim($longevity, '.') . '.';
+        }
+
+        return $parts !== [] ? implode(' ', $parts) : null;
+    }
+
+    private function firstSentences(
+        string $value,
+        int $count,
+        int $maxLength
+    ): ?string {
+        $value = $this->clean($value);
+
+        if (!$value) {
+            return null;
+        }
+
+        $sentences = preg_split('/(?<=[.!?])\s+/', $value) ?: [$value];
+
+        $story = trim(
+            implode(' ', array_slice($sentences, 0, $count))
+        );
+
+        if (mb_strlen($story) > $maxLength) {
+            $story = rtrim(
+                mb_substr($story, 0, $maxLength - 1)
+            ) . '…';
+        }
+
+        return $story;
+    }
+
+    private function notesSummary(
+        ?string $top,
+        ?string $heart,
+        ?string $base
+    ): ?string {
         $rows = [];
 
         if (filled($top)) {
@@ -136,8 +332,18 @@ class ProductContentParser
 
     private function normalize(?string $value): string
     {
-        $value = html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $value = str_replace(["\r\n", "\r", "\n", "\t", '•'], ' ', $value);
+        $value = html_entity_decode(
+            strip_tags((string) $value),
+            ENT_QUOTES | ENT_HTML5,
+            'UTF-8'
+        );
+
+        $value = str_replace(
+            ["\r\n", "\r", "\n", "\t", '•'],
+            ' ',
+            $value
+        );
+
         $value = preg_replace('/\s+/', ' ', $value) ?? $value;
 
         return trim($value);

@@ -1,0 +1,163 @@
+{
+  "package": "ScentsByAamir_CURATED_SEO_MASTER_CONTENT_26_PRODUCTS",
+  "products_total": 26,
+  "fragrances": 23,
+  "tester_boxes": 3,
+  "content_fields": [
+    "subtitle",
+    "short_description",
+    "description",
+    "story",
+    "top_notes",
+    "heart_notes",
+    "base_notes",
+    "wear",
+    "notes",
+    "meta_title",
+    "meta_description"
+  ],
+  "protected_fields": [
+    "name",
+    "slug",
+    "sku",
+    "price",
+    "sale_price",
+    "stock",
+    "images",
+    "category_id",
+    "inventory",
+    "variants"
+  ],
+  "products": [
+    {
+      "title": "Amerel | Elegant Women’s Floral Perfume",
+      "slug": "amerel-inspired-by-dior-jadore-elegant-womens-floral-perfume",
+      "type": "fragrance"
+    },
+    {
+      "title": "Aventus Spirit - Inspired by Creed Aventus | Premium Luxury Perfume for Men",
+      "slug": "aventus-spirit-inspired-by-creed-aventus",
+      "type": "fragrance"
+    },
+    {
+      "title": "Blossom Shine - Inspired by Victoria's Secret | Bright Women’s Perfume",
+      "slug": "blossom-shine",
+      "type": "fragrance"
+    },
+    {
+      "title": "Bold Heat - Inspired by Office for Men | Modern Men’s Perfume",
+      "slug": "bold-heat-inspired-by-office-for-men",
+      "type": "fragrance"
+    },
+    {
+      "title": "Cherelle Inspired by Dior Oud Ispahan | Luxury Oud Perfume",
+      "slug": "cherelle-inspired-by-dior-oud-ispahan-luxury-unisex-perfume",
+      "type": "fragrance"
+    },
+    {
+      "title": "Dark Aure Inspired by Nuit de Feu | Intense Smoky Arabic Unisex Perfume",
+      "slug": "dark-aure-inspired-by-nuit-de-feu-intense-smoky-arabic-unisex-perfume",
+      "type": "fragrance"
+    },
+    {
+      "title": "Dark Seduction - Inspired by Yves Saint Laurent Black Opium | Women’s Perfume",
+      "slug": "dark-seduction",
+      "type": "fragrance"
+    },
+    {
+      "title": "Delure Inspired by Good Girl | Sweet & Seductive Women’s Perfume",
+      "slug": "delure-inspired-by-good-girl-sweet-seductive-womens-perfume",
+      "type": "fragrance"
+    },
+    {
+      "title": "Desert Soul Inspired by Ombre Nomade | Dark Oud Unisex Perfume",
+      "slug": "desert-soul-inspired-by-ombre-nomade-dark-oud-unisex-perfume",
+      "type": "fragrance"
+    },
+    {
+      "title": "Elyndor Inspired by Roja Elysium | Fresh Luxury Men’s Perfume",
+      "slug": "elyndor-inspired-by-roja-elysium-fresh-luxury-mens-perfume",
+      "type": "fragrance"
+    },
+    {
+      "title": "Floral Charm - Inspired by Gucci Flora | Elegant Women's Perfume",
+      "slug": "floral-charm-scentsbyaamir",
+      "type": "fragrance"
+    },
+    {
+      "title": "Hivalta Inspired by Nishane Hacivat | Premium Unisex Perfume",
+      "slug": "hivalta-inspired-by-nishane-hacivat-premium-unisex-perfume",
+      "type": "fragrance"
+    },
+    {
+      "title": "Infinite Spark | Luxury Unisex Perfume",
+      "slug": "infinite-spark",
+      "type": "fragrance"
+    },
+    {
+      "title": "Kavian Inspired by Al Haitham | Premium Arabic Perfume",
+      "slug": "kavian-inspired-by-al-haitham-premium-arabic-unisex-perfume",
+      "type": "fragrance"
+    },
+    {
+      "title": "Le Reve Dore Inspired by La Vie Est Belle | Premium Women’s Sweet Perfume",
+      "slug": "le-reve-dore-inspired-by-la-vie-est-belle-premium-womens-sweet-perfume",
+      "type": "fragrance"
+    },
+    {
+      "title": "Night Rider - Inspired by Bleu de Chanel | Sophisticated Men’s Perfume",
+      "slug": "night-rider-inspired-by-bleu-de-chanel",
+      "type": "fragrance"
+    },
+    {
+      "title": "Ocean Spirit - Inspired by Acqua di Giò | Luxury Men's Perfume in Pakistan",
+      "slug": "ocean-spirit-inspired-by-acqua-di-gio",
+      "type": "fragrance"
+    },
+    {
+      "title": "Opulent Rouge - Inspired by Baccarat Rouge 540 for Men and Women",
+      "slug": "opulent-rouge",
+      "type": "fragrance"
+    },
+    {
+      "title": "Royal Noxis Inspired by Clive Christian 1872 | Luxury Perfume",
+      "slug": "royal-noxis-inspired-by-clive-christian-1872-luxury-mens-perfume",
+      "type": "fragrance"
+    },
+    {
+      "title": "Silver Breeze - Inspired by Creed Silver Mountain Water | Fresh Unisex Perfume",
+      "slug": "silver-breeze-inspired-by-creed-silver-mountain-water-fresh-unisex-perfume",
+      "type": "fragrance"
+    },
+    {
+      "title": "Smoky Chic - Inspired by Gris Dior | Sophisticated Unisex Perfume",
+      "slug": "smoky-chic",
+      "type": "fragrance"
+    },
+    {
+      "title": "Vauren Inspired by YSL Tuxedo | Spicy Amber Luxury Men’s Perfume",
+      "slug": "vauren-inspired-by-ysl-tuxedo-spicy-amber-luxury-mens-perfume",
+      "type": "fragrance"
+    },
+    {
+      "title": "Wild Intense | Most Popular Perfume for Men",
+      "slug": "wild-intense",
+      "type": "fragrance"
+    },
+    {
+      "title": "Custom Perfume Tester Box - Select Any 5 Scents (5ml Each)",
+      "slug": "custom-perfume-tester-box",
+      "type": "tester"
+    },
+    {
+      "title": "Female Perfume Tester Box | 5 x 5ml Luxury Perfume Discovery Set",
+      "slug": "female-perfume-tester-box",
+      "type": "tester"
+    },
+    {
+      "title": "Men’s Perfume Tester Box | 5 x 5ml Luxury Perfume Discovery Set",
+      "slug": "mens-perfume-tester-box",
+      "type": "tester"
+    }
+  ]
+}

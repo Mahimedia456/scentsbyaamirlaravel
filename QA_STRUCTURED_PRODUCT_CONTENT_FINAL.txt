@@ -1,0 +1,23 @@
+SCENTS BY AAMIR — STRUCTURED PRODUCT CONTENT QA
+
+PHP files linted: 148
+PHP syntax failures: 0
+
+Blade files scanned: 103
+Blade structural mismatches: 0
+
+JavaScript:
+resources/js/app.js: PASS
+resources/js/admin.js: PASS
+
+Assertions:
+model structured fields: PASS
+catalog structured fields: PASS
+admin separate note inputs: PASS
+pdp uses base_notes field: PASS
+pdp dedicated description: PASS
+woo parser injected: PASS
+migration parser backfill: PASS
+
+Critical regression:
+Product Description is not a Base Notes source anymore.
