@@ -1,0 +1,29 @@
+{
+  "phase": "Navigation loader + dynamic sitemap SEO",
+  "does_not_overwrite_in_zip": [
+    "routes/web.php",
+    "resources/js/app.js"
+  ],
+  "installer_patches_current_files": [
+    "routes/web.php",
+    "resources/js/app.js"
+  ],
+  "sitemaps": [
+    "/sitemap.xml",
+    "/sitemap-pages.xml",
+    "/sitemap-products.xml",
+    "/sitemap-collections.xml",
+    "/sitemap-journal.xml"
+  ],
+  "excluded_from_sitemap": [
+    "admin",
+    "account",
+    "checkout",
+    "cart",
+    "wishlist",
+    "search",
+    "API/internal"
+  ],
+  "category_sitemap": "Not generated because no canonical category landing route currently exists.",
+  "next_phase": "UBL payment gateway"
+}

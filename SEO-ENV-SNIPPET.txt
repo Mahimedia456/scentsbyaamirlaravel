@@ -1,0 +1,2 @@
+# Add to .env / production environment if not already present:
+SITEMAP_BASE_URL=https://scentsbyaamir.com
