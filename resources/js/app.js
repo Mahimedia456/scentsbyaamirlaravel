@@ -587,54 +587,86 @@ document.addEventListener('DOMContentLoaded', () => {
   initThreeAtmosphere();
 });
 
-// Global page loader: initial page load + real navigations/forms.
+// Global page loader v2 — persist until real navigation completes.
 (() => {
-  const loader = document.getElementById('house-page-loader');
-  if (!loader) return;
+  const getLoader = () => document.getElementById('house-page-loader');
 
-  let revealed = false;
   const reveal = () => {
-    if (revealed) return;
-    revealed = true;
-    window.setTimeout(() => loader.classList.add('is-hidden'), 180);
+    const loader = getLoader();
+    if (!loader) return;
+    loader.classList.add('is-hidden');
   };
-  let navigationFailsafe = null;
 
   const show = () => {
-    revealed = false;
+    const loader = getLoader();
+    if (!loader) return;
     loader.classList.remove('is-hidden');
-
-    window.clearTimeout(navigationFailsafe);
-    navigationFailsafe = window.setTimeout(reveal, 2600);
   };
 
-  if (document.readyState === 'complete') reveal();
-  else window.addEventListener('load', reveal, { once: true });
+  // Expose the same API used by the Blade loader component.
+  window.__hideHouseLoader = reveal;
+  window.__showHouseLoader = show;
 
-  window.setTimeout(reveal, 2200); // fail-safe if an external asset stalls
+  if (document.readyState === 'complete') {
+    window.setTimeout(reveal, 80);
+  } else {
+    window.addEventListener('load', () => window.setTimeout(reveal, 80), { once: true });
+  }
+
+  window.addEventListener('pageshow', () => window.setTimeout(reveal, 30));
 
   document.addEventListener('click', (event) => {
-    if (event.defaultPrevented) return;
+    if (event.defaultPrevented || event.button !== 0) return;
 
     const link = event.target.closest('a[href]');
-    if (!link || link.hasAttribute('data-no-page-loader')) return;
+    if (!link || link.hasAttribute('data-no-page-loader') || link.hasAttribute('download')) return;
+
     const href = link.getAttribute('href') || '';
-    if (!href || href.startsWith('#') || href.startsWith('javascript:') || link.target === '_blank' || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+
+    if (
+      !href ||
+      href.startsWith('#') ||
+      href.startsWith('javascript:') ||
+      href.startsWith('mailto:') ||
+      href.startsWith('tel:') ||
+      link.target === '_blank' ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      event.altKey
+    ) return;
+
     try {
       const url = new URL(link.href, window.location.href);
+
       if (url.origin !== window.location.origin) return;
-      if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
+
+      // In-page anchor movement is not a page navigation.
+      if (
+        url.pathname === window.location.pathname &&
+        url.search === window.location.search &&
+        url.hash &&
+        url.hash !== window.location.hash
+      ) return;
+
+      // There is deliberately no 2–3 second hide timer here. Once a real
+      // navigation starts, the loader stays visible until the next document's
+      // load/pageshow lifecycle reveals it.
       show();
     } catch (_) {}
   });
 
   document.addEventListener('submit', (event) => {
+    if (event.defaultPrevented) return;
+
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;
     if (form.dataset.noLoader === 'true') return;
     if (!form.checkValidity()) return;
+
     show();
   });
 
-  window.addEventListener('pageshow', reveal);
+  // Covers location changes triggered by normal browser navigation.
+  window.addEventListener('beforeunload', show);
 })();

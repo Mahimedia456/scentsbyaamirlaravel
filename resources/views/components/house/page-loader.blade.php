@@ -3,9 +3,6 @@
         <img
             src="{{ asset('logo-02.png') }}"
             alt=""
-            width="298"
-            height="70"
-            decoding="async"
             class="house-page-loader__logo"
         >
         <div class="house-page-loader__line"><span></span></div>
@@ -15,25 +12,35 @@
 
 <script>
     (() => {
+        const getLoader = () => document.getElementById('house-page-loader');
+
         const hide = () => {
-            const loader = document.getElementById('house-page-loader');
+            const loader = getLoader();
             if (!loader) return;
             loader.classList.add('is-hidden');
         };
 
-        window.__hideHouseLoader = hide;
+        const show = () => {
+            const loader = getLoader();
+            if (!loader) return;
+            loader.classList.remove('is-hidden');
+        };
 
+        window.__hideHouseLoader = hide;
+        window.__showHouseLoader = show;
+
+        // Initial document: remain covered until the browser reports the page loaded.
         if (document.readyState === 'complete') {
             window.setTimeout(hide, 80);
         } else {
             window.addEventListener('load', () => window.setTimeout(hide, 80), { once: true });
         }
 
-        // Independent fail-safe: loader can never trap the storefront even if
-        // a Vite module or third-party asset throws before app.js initializes.
-        window.setTimeout(hide, 1800);
-        window.addEventListener('pageshow', hide);
-        window.addEventListener('error', () => window.setTimeout(hide, 0));
-        window.addEventListener('unhandledrejection', () => window.setTimeout(hide, 0));
+        // Back/forward cache restoration must reveal the restored page.
+        window.addEventListener('pageshow', () => window.setTimeout(hide, 30));
+
+        // Emergency only: never leave the storefront permanently trapped if a
+        // browser/third-party resource prevents a normal load event.
+        window.setTimeout(hide, 12000);
     })();
 </script>

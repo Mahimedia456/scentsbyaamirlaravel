@@ -209,4 +209,4 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 });
 
-Route::get('/sitemap.xml', [\App\Http\Controllers\Storefront\SitemapController::class, 'index'])->name('sitemap');
+require __DIR__.'/seo.php';
