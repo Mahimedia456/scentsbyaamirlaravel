@@ -1,0 +1,10 @@
+{
+  "scope": "Journal DB schema corrective migration only",
+  "adds_if_missing": [
+    "journal_posts.wordpress_categories",
+    "journal_posts.wordpress_tags",
+    "journal_posts.wordpress_modified_at"
+  ],
+  "comments_imported": false,
+  "core_storefront_files_modified": false
+}

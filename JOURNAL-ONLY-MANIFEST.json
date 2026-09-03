@@ -1,0 +1,45 @@
+{
+  "scope": "WordPress -> existing Laravel Journal only",
+  "imports": [
+    "title",
+    "slug",
+    "excerpt",
+    "full article HTML",
+    "featured image",
+    "inline images",
+    "published date",
+    "modified date",
+    "author name",
+    "all post categories",
+    "all post tags",
+    "primary category as eyebrow",
+    "original source URL",
+    "Yoast meta title/description when available"
+  ],
+  "deliberately_not_imported": [
+    "comments",
+    "comment counts",
+    "comment users/authors",
+    "comment feeds and comment metadata",
+    "unrelated WordPress pages/products/metadata"
+  ],
+  "protected_core_files_modified": [],
+  "files": [
+    "README-JOURNAL-ONLY.md",
+    "app/Console/Commands/ImportWordPressJournal.php",
+    "app/Http/Controllers/Admin/JournalPostController.php",
+    "app/Models/JournalPost.php",
+    "app/Services/Journal/JournalHtmlSanitizer.php",
+    "app/Services/Journal/WordPressJournalImporter.php",
+    "config/journal_import.php",
+    "database/migrations/2026_09_02_210000_add_wordpress_source_fields_to_journal_posts.php",
+    "resources/views/admin/journal-posts/form.blade.php",
+    "resources/views/admin/journal-posts/index.blade.php",
+    "resources/views/store/journal-detail.blade.php"
+  ],
+  "fixes": [
+    "Journal detail supports DB Eloquent rows and legacy config stdClass fallback without undefined SEO properties",
+    "Adds journal:status DB/import diagnostic",
+    "Correct command output: categories/tags imported, comments ignored"
+  ]
+}

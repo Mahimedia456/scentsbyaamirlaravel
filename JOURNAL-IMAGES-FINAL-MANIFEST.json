@@ -1,0 +1,35 @@
+{
+  "scope": "Journal only: imported + manual featured image management",
+  "features": [
+    "admin image upload",
+    "admin image preview",
+    "admin image replace",
+    "admin image remove",
+    "admin list thumbnails",
+    "WordPress image local download with remote fallback",
+    "storefront journal image resolution",
+    "categories and tags"
+  ],
+  "comments_imported": false,
+  "protected_core_files_modified": [],
+  "files": [
+    "JOURNAL-DB-FIX-MANIFEST.json",
+    "JOURNAL-ONLY-MANIFEST.json",
+    "README-JOURNAL-DB-FIX.md",
+    "README-JOURNAL-IMAGES-FINAL.md",
+    "README-JOURNAL-ONLY.md",
+    "app/Console/Commands/ImportWordPressJournal.php",
+    "app/Console/Commands/JournalImportStatus.php",
+    "app/Http/Controllers/Admin/JournalPostController.php",
+    "app/Models/JournalPost.php",
+    "app/Services/Journal/JournalHtmlSanitizer.php",
+    "app/Services/Journal/WordPressJournalImporter.php",
+    "config/journal_import.php",
+    "database/migrations/2026_09_02_210000_add_wordpress_source_fields_to_journal_posts.php",
+    "database/migrations/2026_09_03_140000_add_missing_wordpress_taxonomy_fields_to_journal_posts.php",
+    "resources/views/admin/journal-posts/form.blade.php",
+    "resources/views/admin/journal-posts/index.blade.php",
+    "resources/views/store/journal-detail.blade.php",
+    "resources/views/store/journal.blade.php"
+  ]
+}
