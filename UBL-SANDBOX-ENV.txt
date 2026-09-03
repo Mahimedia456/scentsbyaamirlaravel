@@ -1,0 +1,24 @@
+# Scents by Aamir — UBL SANDBOX / TEST ONLY
+# Add these to server .env, then run php artisan optimize:clear.
+
+UBL_MODE=sandbox
+UBL_BASE_URL=https://demo-ipg.ctdev.comtrust.ae:2443
+UBL_PUBLIC_URL=https://shop.scentsbyaamir.com
+UBL_CUSTOMER="Demo Merchant"
+UBL_STORE=0000
+UBL_TERMINAL=0000
+UBL_USERNAME=Demo_fY9c
+UBL_PASSWORD="Comtrust@20182018"
+UBL_CURRENCY=PKR
+UBL_CHANNEL=Web
+UBL_TRANSACTION_HINT="CPT:Y;VCC:Y;"
+UBL_ORDER_NAME="Scents by Aamir"
+UBL_TIMEOUT=30
+UBL_CONNECT_TIMEOUT=12
+UBL_VERIFY_SSL=true
+
+# IMPORTANT
+# These are public TEST values shown in the official UBL-linked EPG REST integration guide.
+# Never use them as production credentials.
+# When UBL supplies merchant-specific live credentials, replace BASE_URL/CUSTOMER/STORE/
+# TERMINAL/USERNAME/PASSWORD as instructed by UBL and set UBL_MODE=production.

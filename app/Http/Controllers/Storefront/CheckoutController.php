@@ -8,6 +8,7 @@ use App\Models\PaymentMethod;
 use App\Models\ShippingZone;
 use App\Models\StoreSetting;
 use App\Services\OrderPlacementService;
+use App\Services\UblPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -29,7 +30,7 @@ class CheckoutController extends Controller
 
         $payments = Schema::hasTable('payment_methods')
             ? PaymentMethod::where('enabled', true)
-                ->whereIn('code', ['cod', 'bank_transfer'])
+                ->whereIn('code', ['cod', 'ubl_card', 'bank_transfer'])
                 ->orderBy('sort_order')
                 ->get()
             : collect();
@@ -50,7 +51,7 @@ class CheckoutController extends Controller
         ));
     }
 
-    public function store(Request $request, OrderPlacementService $orders)
+    public function store(Request $request, OrderPlacementService $orders, UblPaymentService $ubl)
     {
         $customer = auth('customer')->user();
 
@@ -64,7 +65,7 @@ class CheckoutController extends Controller
             'decoded_items.*.variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
             'decoded_items.*.qty' => ['required', 'integer', 'min:1', 'max:25'],
             'shipping_zone_id' => ['required', 'integer', 'exists:shipping_zones,id'],
-            'payment_method' => ['required', Rule::in(['cod', 'bank_transfer'])],
+            'payment_method' => ['required', Rule::in(['cod', 'ubl_card', 'bank_transfer'])],
             'payment_reference' => ['nullable', 'string', 'max:190'],
             'payment_receipt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
             'coupon_code' => ['nullable', 'string', 'max:80'],
@@ -117,6 +118,15 @@ class CheckoutController extends Controller
 
         if ($existing = $existingQuery->first()) {
             $this->rememberGuestOrder($existing);
+
+            if ($existing->payment_method === 'ubl_card' && $existing->payment_status !== 'paid') {
+                $attempt = $ubl->checkoutAttempt($existing);
+                if (!in_array($attempt->status, ['created', 'registered'], true)) {
+                    $attempt = $ubl->newAttempt($existing);
+                }
+                return redirect()->route('payments.ubl.start', ['token' => $attempt->public_token]);
+            }
+
             return redirect()->route('checkout.success', $existing);
         }
 
@@ -127,6 +137,12 @@ class CheckoutController extends Controller
         );
 
         $this->rememberGuestOrder($order);
+
+        if ($order->payment_method === 'ubl_card') {
+            $attempt = $ubl->checkoutAttempt($order);
+            return redirect()->route('payments.ubl.start', ['token' => $attempt->public_token]);
+        }
+
         session()->forget('checkout_token');
 
         return redirect()

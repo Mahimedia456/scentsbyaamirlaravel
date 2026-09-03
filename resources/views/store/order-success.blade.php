@@ -19,7 +19,9 @@ localStorage.removeItem('sba_cart');
       <h1 class="mt-4 display-serif text-5xl sm:text-7xl">Thank you.</h1>
       <p class="mt-5 max-w-xl text-sm leading-6 text-black/55">Your order <strong>{{ $order->order_number }}</strong> has been saved and is now visible to our team.</p>
 
-      @if($order->payment_method === 'bank_transfer')
+      @if($order->payment_method === 'ubl_card')
+        <div class="mt-8 border border-amber-200 bg-amber-50 p-5 text-sm leading-6"><strong>Card payment status:</strong> {{ ucfirst($order->payment_status) }}. UBL-hosted checkout must confirm the transaction before fulfilment.</div>
+      @elseif($order->payment_method === 'bank_transfer')
         <div class="mt-8 border border-amber-200 bg-amber-50 p-5 text-sm leading-6">
           <strong>Bank payment verification pending.</strong><br>
           Reference: {{ $order->payment_reference ?: '—' }}. Our admin team will verify your transfer before confirming the order.
@@ -41,14 +43,7 @@ localStorage.removeItem('sba_cart');
         <div class="flex justify-between border-t border-black/10 pt-3 text-base"><span>Total</span><span>PKR {{ number_format((float)$order->grand_total) }}</span></div>
       </div>
       @if($order->gift_wrap)<div class="mt-6 border border-black/10 bg-[#f7f6f2] p-5 text-sm"><strong>Gift presentation included.</strong>@if($order->gift_message)<p class="mt-2 whitespace-pre-line text-black/55">{{ $order->gift_message }}</p>@endif</div>@endif
-      <div class="mt-9 flex flex-wrap gap-3">
-        @auth('customer')
-          <a href="{{ route('orders') }}" class="btn-solid">View my orders</a>
-        @else
-          <a href="{{ route('track-order') }}" class="btn-solid">Track this order</a>
-        @endauth
-        <a href="{{ route('shop') }}" class="btn-outline">Continue shopping</a>
-      </div>
+      <div class="mt-9 flex flex-wrap gap-3"><a href="{{ route('orders') }}" class="btn-solid">View my orders</a><a href="{{ route('shop') }}" class="btn-outline">Continue shopping</a></div>
     </div>
   </div>
 </section>

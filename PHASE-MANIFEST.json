@@ -1,29 +1,24 @@
 {
-  "phase": "Navigation loader + dynamic sitemap SEO",
-  "does_not_overwrite_in_zip": [
-    "routes/web.php",
-    "resources/js/app.js"
+  "phase": "UBL hosted card payment sandbox full module",
+  "provider": "UBL / EPG redirection",
+  "flow": [
+    "registration",
+    "hosted payment portal",
+    "3DS",
+    "return callback",
+    "finalization",
+    "paid/failed"
   ],
-  "installer_patches_current_files": [
-    "routes/web.php",
-    "resources/js/app.js"
+  "preserves": [
+    "COD",
+    "bank transfer",
+    "guest checkout",
+    "customer checkout",
+    "Journal",
+    "sitemap"
   ],
-  "sitemaps": [
-    "/sitemap.xml",
-    "/sitemap-pages.xml",
-    "/sitemap-products.xml",
-    "/sitemap-collections.xml",
-    "/sitemap-journal.xml"
-  ],
-  "excluded_from_sitemap": [
-    "admin",
-    "account",
-    "checkout",
-    "cart",
-    "wishlist",
-    "search",
-    "API/internal"
-  ],
-  "category_sitemap": "Not generated because no canonical category landing route currently exists.",
-  "next_phase": "UBL payment gateway"
+  "sandbox_endpoint": "https://demo-ipg.ctdev.comtrust.ae:2443",
+  "production_endpoint_from_guide": "https://ipg.comtrust.ae:2443",
+  "credentials_storage": ".env only",
+  "important": "Public sandbox credentials are test-only; merchant production credentials must come from UBL."
 }

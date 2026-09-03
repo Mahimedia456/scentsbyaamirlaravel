@@ -283,7 +283,7 @@
                                 <input type="radio" x-model="payment" value="{{ $method->code }}" class="mt-1">
                                 <div class="min-w-0 flex-1">
                                     <p class="text-sm font-medium">{{ $method->name }}</p>
-                                    <p class="mt-1 break-words text-xs leading-5 text-black/45">{{ $method->code === 'cod' ? 'Pay in cash when your order is delivered.' : 'Transfer to our bank account, then provide the transaction/reference number.' }}</p>
+                                    <p class="mt-1 break-words text-xs leading-5 text-black/45">{{ $method->code === 'cod' ? 'Pay in cash when your order is delivered.' : ($method->code === 'ubl_card' ? 'Pay securely by Visa or Mastercard on the UBL hosted payment page. Card details are not entered on our website.' : 'Transfer to our bank account, then provide the transaction/reference number.') }}</p>
 
                                     @if($method->code === 'bank_transfer' && is_array($method->config))
                                         <div class="mt-4 border-t border-black/10 pt-4 text-xs leading-6 text-black/60">
@@ -322,7 +322,7 @@
                         :disabled="placing || !$store.commerce.count || !shippingId || !payment"
                         :class="{'opacity-50': placing || !$store.commerce.count || !shippingId || !payment}"
                     >
-                        Place order
+                        <span x-text="payment === 'ubl_card' ? 'Place order & pay securely' : 'Place order'"></span>
                     </button>
                 </div>
             </div>

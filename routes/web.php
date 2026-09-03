@@ -210,3 +210,5 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
 require __DIR__.'/seo.php';
+
+require __DIR__.'/payments.php';

@@ -57,7 +57,7 @@ class OrderPlacementService
         $payment = PaymentMethod::query()
             ->where('code', $payload['payment_method'])
             ->where('enabled', true)
-            ->whereIn('code', ['cod', 'bank_transfer'])
+            ->whereIn('code', ['cod', 'ubl_card', 'bank_transfer'])
             ->first();
         if (!$payment) {
             throw ValidationException::withMessages(['payment_method' => 'The selected payment method is unavailable.']);
@@ -183,7 +183,7 @@ class OrderPlacementService
                     'shipping_zone_id' => $shipping->id,
                     'status' => 'pending',
                     'payment_status' => 'pending',
-                    'payment_verification_status' => $payment->code === 'bank_transfer' ? 'pending' : 'not_required',
+                    'payment_verification_status' => in_array($payment->code, ['bank_transfer', 'ubl_card'], true) ? 'pending' : 'not_required',
                     'currency' => 'PKR',
                     'subtotal' => round($subtotal, 2),
                     'discount_total' => round($discountTotal, 2),
@@ -271,11 +271,15 @@ class OrderPlacementService
 
                 if ($customer) {
                     $customer->update(['last_order_at' => now()]);
-                    $this->notifications->orderPlaced($order);
+                    if ($payment->code !== 'ubl_card') {
+                        $this->notifications->orderPlaced($order);
+                    }
                 }
                 return $order->load('items');
             }, 3);
-            $this->mail->order($order, 'placed');
+            if ($order->payment_method !== 'ubl_card') {
+                $this->mail->order($order, 'placed');
+            }
             return $order;
         } catch (Throwable $e) {
             if ($receiptPath) {
