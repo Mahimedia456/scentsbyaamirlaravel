@@ -10,8 +10,26 @@
 
     $imageUrl = function ($path) {
         if (!$path) return null;
-        if (str_starts_with($path, 'http') || str_starts_with($path, '/')) return $path;
-        return asset('storage/'.$path);
+
+        $path = str_replace('\\', '/', trim((string) $path));
+
+        // Keep genuine remote URLs and already-correct media URLs unchanged.
+        if (
+            str_starts_with($path, 'http://') ||
+            str_starts_with($path, 'https://') ||
+            str_starts_with($path, '/media/')
+        ) {
+            return $path;
+        }
+
+        // Normalize legacy values previously saved/generated as /storage/...
+        if (str_starts_with($path, '/storage/')) {
+            $path = substr($path, strlen('/storage/'));
+        } elseif (str_starts_with($path, 'storage/')) {
+            $path = substr($path, strlen('storage/'));
+        }
+
+        return route('store.media', ['path' => ltrim($path, '/')]);
     };
 @endphp
 
